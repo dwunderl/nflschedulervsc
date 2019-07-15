@@ -1,0 +1,11 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "CodeLens (Launch) - NflScheduler",
+            "request": "launch",
+            "mainClass": "com.nflscheduling.NflScheduler",
+            "projectName": "NflSchedulerVSC"
+        }
+    ]
+}

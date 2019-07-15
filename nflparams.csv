@@ -1,0 +1,9 @@
+NumberOfWeeks,17
+NumberOfTeams,32
+reschedAttemptsMultiWeeksBackLimit,25
+reschedAttemptsOneWeekBackLimit,20
+reschedAttemptsSameWeekLimit,20
+scheduleAttempts,200
+savedScheduleLimit,10
+alertLimit,3
+hardViolationLimit,0
