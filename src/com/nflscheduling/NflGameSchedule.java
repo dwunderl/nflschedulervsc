@@ -27,6 +27,7 @@ public class NflGameSchedule {
    public int byeCandidateScore;
 
    public boolean isBye;
+   public int candidateCount;
 
    NflGameSchedule(NflGame theGame, NflSchedule theSchedule) {
       //System.out.println("Creating an nflGameMetric");
@@ -73,23 +74,26 @@ public class NflGameSchedule {
 
       //NflGMetRemainingOpportunities metricRO = new NflGMetRemainingOpportunities("RemainingOpportunities", this);
       //metrics.add(metricRO);
+
+      candidateCount = 0;
       
       return true;
    }
    
    public boolean initBye() {
       homeTeamSchedule = schedule.findTeam(game.homeTeam);
-	  awayTeamSchedule = schedule.findTeam(game.awayTeam);
-	  metrics = new ArrayList<NflGameMetric>();
+	   awayTeamSchedule = schedule.findTeam(game.awayTeam);
+	   metrics = new ArrayList<NflGameMetric>();
       opponentByes = new ArrayList<NflGameSchedule>();
       isBye = true;
-	      
+      candidateCount = 0;
+
       return true;
    }
 
    public boolean containsTeam(String teamName) {
 	   if (teamName.equalsIgnoreCase(game.homeTeam) ||
-           teamName.equalsIgnoreCase(game.awayTeam)) {
+          teamName.equalsIgnoreCase(game.awayTeam)) {
 		   return true;
 	   }
 	   
@@ -106,7 +110,7 @@ public class NflGameSchedule {
 	      gameMetric.computeMetric(weekNum, schedule, candidateGames);
 	      score += gameMetric.score*gameMetric.weight;
 	      if (gameMetric.hardViolation) {
-	    	  hardViolationCount++;
+	    	   hardViolationCount++;
 	      }
       }
       

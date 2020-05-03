@@ -13,12 +13,11 @@ public class NflTeam {
    public String conference;
    public String division;
    
-   public NflGame[] scheduledGames;
-
+   // public NflGame[] scheduledGames;
 
    NflTeam(String name) {
       teamName = name;
-      scheduledGames = new NflGame[NflDefs.numberOfWeeks];
+      //scheduledGames = new NflGame[NflDefs.numberOfWeeks];
    }
 }
 
