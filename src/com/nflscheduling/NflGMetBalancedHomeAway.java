@@ -5,7 +5,7 @@ import java.util.ArrayList;
 public class NflGMetBalancedHomeAway extends NflGameMetric {
 
 	public NflGMetBalancedHomeAway(String theName, NflGameSchedule theGameSchedule) {
-		super(theName, theGameSchedule);
+	   super(theName, theGameSchedule);
 	}
 
 	@Override

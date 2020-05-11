@@ -52,9 +52,11 @@ public class NflGMetDivisionalSeparation extends NflGameMetric {
        // if so - no problem - otherwise - incentivize this game with a negative penalty
        boolean divisionalPairScheduled = false;
        
+       int sDir = NflDefs.schedulingDirection;
+
        NflTeamSchedule teamSchedule = gameSchedule.homeTeamSchedule;
-       for (int wi=weekNum+1; wi <= NflDefs.numberOfWeeks; wi++) {
-          NflGameSchedule teamGame2 = teamSchedule.scheduledGames[wi-1];
+       for (int wi=weekNum-sDir; (sDir == -1) ? wi <= NflDefs.numberOfWeeks : wi >= 1; wi-=sDir) {
+            NflGameSchedule teamGame2 = teamSchedule.scheduledGames[wi-1];
        
           if (teamGame2 == null || teamGame2.isBye || !teamGame2.game.findAttribute("division")) {
 	         continue;

@@ -40,7 +40,7 @@ public class NflSchedule {
 		               ArrayList<NflResource> resources) {
 	   
 	   
-	  teamSchedules = new ArrayList<NflTeamSchedule>();
+	   teamSchedules = new ArrayList<NflTeamSchedule>();
       allGames = new ArrayList<NflGameSchedule>();
       unscheduledGames = new ArrayList<NflGameSchedule>();
       unscheduledByes = new ArrayList<NflGameSchedule>();
@@ -348,17 +348,22 @@ public class NflSchedule {
        
        // Short circuit (temporary): exactly specified number for this week
        // TBD: Doesnt account for forced byes in the schedule
-       /*
-       if (byeResource.weeklyMinimum[weekNum-1] == byeResource.weeklyLimit[weekNum-1]) {
-    	   byesToScheduleThisWeek = byeResource.weeklyMinimum[weekNum-1];
-    	   return true;
-       }
-       */
-
+   
        // determine remaining bye capacity based on the specified bye resource max 
        // reduced by the number of byes already scheduled
-       // Accumulated over the remaining unscheduled weeks
-	   for (int wi=weekNum; wi >= 1; wi--) {
+       
+      int sDir = NflDefs.schedulingDirection;
+      int weekEnd = NflDefs.numberOfWeeks;
+
+      if (sDir == -1) {
+         weekEnd = 1;
+      }
+      else if (sDir == 1) {
+         weekEnd = NflDefs.numberOfWeeks;
+      }
+      
+      // Accumulated over the remaining unscheduled weeks
+      for (int wi=weekNum; wi*sDir <= weekEnd*sDir; wi += sDir) {
 	      remainingByeCapacity += byeResourceSchedule.resource.weeklyLimit[wi-1] - byeResourceSchedule.usage[wi-1];
 	      remainingByeMin += byeResourceSchedule.resource.weeklyMinimum[wi-1] - byeResourceSchedule.usage[wi-1];
 	   }
@@ -376,21 +381,10 @@ public class NflSchedule {
 	   }
 	   
 	   // Determine the min and the max possible byes for this week
-       int min = Math.max(byeResourceSchedule.resource.weeklyMinimum[weekNum-1] - byesScheduledThisWeek, 0);
+      int min = Math.max(byeResourceSchedule.resource.weeklyMinimum[weekNum-1] - byesScheduledThisWeek, 0);
 	   int max = Math.max(byeResourceSchedule.resource.weeklyLimit[weekNum-1] - byesScheduledThisWeek, 0);
-	   /*
-	    * 	AdjustedMin = 
-			max(
-				remByesToSched - (RemByeMax - MaxByes) - ForcedByes(usage),    
-				MinByes - ForcedByes(usage))
-	AdjustedMax = 
-		Min(
-			remByesToSched - (RemByeMin - MinByes) - ForcedByes(usage),
-			MaxByes - ForcedByes(usage))
-
-*/
 	   
-       int adjustedMin = Math.max(byeResourceSchedule.resource.weeklyMinimum[weekNum-1] - byesScheduledThisWeek, 
+      int adjustedMin = Math.max(byeResourceSchedule.resource.weeklyMinimum[weekNum-1] - byesScheduledThisWeek, 
                                   remainingByesToSchedule - (remainingByeCapacity - byeResourceSchedule.resource.weeklyLimit[weekNum-1]));
 	   int adjustedMax = Math.min(byeResourceSchedule.resource.weeklyLimit[weekNum-1] - byesScheduledThisWeek, 
                                   remainingByesToSchedule - (remainingByeMin - byeResourceSchedule.resource.weeklyMinimum[weekNum-1]));

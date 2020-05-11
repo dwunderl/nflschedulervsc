@@ -42,6 +42,7 @@ public class NflGMetNoRepeatedMatchup extends NflGameMetric {
 	   
 	   // Check next weeks game for no repeated matchup
 	   // be aware of byes - skip over
+
 	   if (weekNum+1 <= NflDefs.numberOfWeeks) {
 		  // Check next non-bye game for the current game's home team to make sure no repeat
 	      for (int wi=weekNum+1; wi <= NflDefs.numberOfWeeks; wi++) {
@@ -63,10 +64,11 @@ public class NflGMetNoRepeatedMatchup extends NflGameMetric {
              
              break;
 	      }
-	      
+
+		  
 		  // Check next non-bye game for the current game's away team to make sure no repeat
 	      for (int wi=weekNum+1; wi <= NflDefs.numberOfWeeks; wi++) {
-	         NflGameSchedule nextWeeksAwayTeamGame = awayTeamSched.scheduledGames[wi-1]; // NOTE: weekNum starts at 1, must correct for index
+			 NflGameSchedule nextWeeksAwayTeamGame = awayTeamSched.scheduledGames[wi-1]; // NOTE: weekNum starts at 1, must correct for index
              if (nextWeeksAwayTeamGame == null) {
          	    break;
              }
@@ -101,7 +103,7 @@ public class NflGMetNoRepeatedMatchup extends NflGameMetric {
 	    	 }
 	    	 
              if (prevWeeksHomeTeamGame.game.awayTeam.equalsIgnoreCase(gameSchedule.game.homeTeam) &&
-            		 prevWeeksHomeTeamGame.game.homeTeam.equalsIgnoreCase(gameSchedule.game.awayTeam)) {
+                 prevWeeksHomeTeamGame.game.homeTeam.equalsIgnoreCase(gameSchedule.game.awayTeam)) {
                 score = 10.0;
                 alertViolation = true;
                 firstMatchupWeek = wi;

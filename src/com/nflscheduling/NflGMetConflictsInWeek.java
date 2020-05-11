@@ -19,7 +19,7 @@ public class NflGMetConflictsInWeek extends NflGameMetric {
        
  	  for(NflGameSchedule otherUSgame: candidateGames) {
          if (otherUSgame == gameSchedule) {
-        	    continue;   // don't count myself as a conflict
+        	continue;   // don't count myself as a conflict
          }
          
          if (otherUSgame.game.homeTeam.equalsIgnoreCase(gameSchedule.game.homeTeam) ||

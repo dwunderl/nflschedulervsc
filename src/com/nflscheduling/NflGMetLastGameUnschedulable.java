@@ -22,7 +22,7 @@ public class NflGMetLastGameUnschedulable extends NflGameMetric {
             unScheduledTeamCount++;
             if (!gameSchedule.containsTeam(teamSchedule.team.teamName)) {
                remainingUnscheduledTeams.add(teamSchedule);
-    	        }
+    	      }
          }
       }
 

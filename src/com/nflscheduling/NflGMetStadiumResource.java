@@ -41,21 +41,22 @@ public class NflGMetStadiumResource extends NflGameMetric {
       // determine the remaining capacity of the stadium
       // walk through the remaining unscheduled weeks from weeknum=1 to the current weeknum for the NflResource - add up the (weeklyLimit-usage) for all weeks
 
+      int sDir = NflDefs.schedulingDirection;
       int remainingCapacityOfStadium = 0;
-      for (int wi=weekNum; wi >= 1; wi--) {
-    	     remainingCapacityOfStadium += stadiumResourceSchedule.usage[wi-1];
+      for (int wi=weekNum; (sDir == -1) ? wi >= 1 : wi <= NflDefs.numberOfWeeks; wi+=sDir) {
+    	   remainingCapacityOfStadium += stadiumResourceSchedule.usage[wi-1];
       }
       
       // determine the remaining unscheduled home games for the stadium
       
       int remainingHomeGames = 0;
-	  for(NflGameSchedule usGame: candidateGames) {
-		  if (usGame.stadium == null) continue;
+	   for(NflGameSchedule usGame: candidateGames) {
+		   if (usGame.stadium == null) continue;
 		  
-		  if (usGame.stadium.equalsIgnoreCase(stadiumResourceSchedule.resource.resourceName)) {
-			  remainingHomeGames++;
-		  }
-	  }
+		   if (usGame.stadium.equalsIgnoreCase(stadiumResourceSchedule.resource.resourceName)) {
+			   remainingHomeGames++;
+		   }
+	   }
 	  
       // determine the home/away games scheduled (in this week) for the teams having this as their home stadium stadium (count my game)
       int awayGamesScheduledThisWeek = 0;
@@ -77,15 +78,15 @@ public class NflGMetStadiumResource extends NflGameMetric {
 	     if (teamSched.team.stadium == null) continue;
     	    if (teamSched.team.stadium.equalsIgnoreCase(stadiumResourceSchedule.resource.resourceName)) {
             NflGameSchedule thisWeeksGame = teamSched.scheduledGames[weekNum-1];
-    	    if (thisWeeksGame != null) {
-    	       if (thisWeeksGame.game.homeTeam.equalsIgnoreCase(teamSched.team.teamName)) {
-    	    	  homeGamesScheduledThisWeek++;
-    	       }
-    	       else {
-    	          awayGamesScheduledThisWeek++;
-    	       }
-    	    }
-    	 }
+    	      if (thisWeeksGame != null) {
+    	        if (thisWeeksGame.game.homeTeam.equalsIgnoreCase(teamSched.team.teamName)) {
+    	    	     homeGamesScheduledThisWeek++;
+    	        }
+    	        else {
+    	           awayGamesScheduledThisWeek++;
+    	        }
+    	      }
+    	   }
       }
       
       // Calculate the metric penalty

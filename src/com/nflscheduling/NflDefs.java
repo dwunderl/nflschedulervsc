@@ -11,6 +11,7 @@ public class NflDefs {
 	public static int savedScheduleLimit = 10;
 	public static int alertLimit = 4;
 	public static int hardViolationLimit = 0;
+	public static int schedulingDirection = -1;
 
 	public NflDefs() {
 	}
