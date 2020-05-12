@@ -145,10 +145,6 @@ public class NflScheduler {
 
       schedules = new ArrayList<NflSchedule>();
       
-      int sDir = NflDefs.schedulingDirection;
-
-      lowestWeekNum = (sDir == -1) ? 1000 : 0;
-
       // ----------- debug output -----------------------------
       System.out.println("Creating new nflScheduler");
       System.out.println("numberOfWeeks: " + NflDefs.numberOfWeeks);
@@ -164,29 +160,15 @@ public class NflScheduler {
    }
 
    public boolean scheduleInit() {
+      int sDir = NflDefs.schedulingDirection;
+
       curSchedule = new NflSchedule();
       curSchedule.init(teams, games, resources);
 
-      // Debug output for initial schedule basic structural info
-      // ------------------------------------------------------
-      // System.out.println("curSchedule.teams size is: " +
-      // curSchedule.teamSchedules.size());
-
-      // for (int i=0; i < curSchedule.teamSchedules.size(); i++) {
-      // NflTeamSchedule teamSchedule = curSchedule.teamSchedules.get(i);
-      // System.out.println("team: " + i + ", " + teamSchedule.team.teamName);
-      // }
-
-      // Dump the resource data
-      // System.out.println("attr limit length is: " +
-      // curSchedule.resourceSchedules.size());
-      // System.out.println("attr limit (1) intervals length is: " +
-      // resources.get(0).weeklyLimit.length);
-      // System.out.println("attr limit[1].weeklyLimit[1] is: " +
-      // resources.get(0).weeklyLimit.length);
-      // System.out.println("attr limit[1].weeklyLimit[numberOfWeeks] is: " +
-      // resources.get(0).weeklyLimit.length);
-      // ------------------------------------------------------
+      lowestWeekNum = (sDir == -1) ? 1000 : 0;
+      iterNum = 0;
+      fingerPrintMap = new HashMap<Double, NflPartialScheduleEntry>();
+      fpSkipCount = 0;
 
       return true;
    }
@@ -209,10 +191,7 @@ public class NflScheduler {
          reschedLog = new ArrayList<String>();
          openBriefLogFile();
          openPartialScheduleLogFile();
-         iterNum = 0;
-         fingerPrintMap = new HashMap<Double, NflPartialScheduleEntry>();
-         fpSkipCount = 0;
-
+ 
          // Schedule the remaining unrestricted games
          scheduleUnrestrictedGames(curSchedule);
 
@@ -1167,7 +1146,10 @@ public class NflScheduler {
       // if (fingerPrintMap.containsKey(partialScheduleEntry.fingerPrint)) {
       // count = fingerPrintMap.get(partialScheduleEntry.fingerPrint);
 
+      boolean gamesToSchedule = false;
+
       while ((schedule.scheduledTeamsInWeek(weekNum)) < NflDefs.numberOfTeams) {
+         gamesToSchedule = true;
          game = scheduleNextUnrestrictedGameInWeek(schedule, weekNum);
          if (game == null) {
             // System.out.println("Scheduler: failed to schedule all teams in week: " +
@@ -1214,7 +1196,8 @@ public class NflScheduler {
          NflPartialScheduleEntry partialScheduleEntry = fingerPrintMap.get(schedule.latestScheduleFingerPrint);
          SchedFingerPrintCount = partialScheduleEntry.count;
          // if (SchedFingerPrintCount > 1 && weekNum < NflDefs.numberOfWeeks - 1) {
-         if (SchedFingerPrintCount > 1) {
+
+         if (gamesToSchedule && SchedFingerPrintCount > 1) {
             status = false;
             fpSkipCount++;
          }
@@ -1412,9 +1395,7 @@ public class NflScheduler {
                //System.out.println("Scheduling score 0 Bye in week: " + weekNum + " home team: " + byeToSchedule.homeTeamSchedule.team.teamName + ", unscheduledByes: " + schedule.unscheduledByes.size() + ", byesToSchedule: " + byesToSchedule.size());
                //return null;   // the bye is unschedulable - there is a conflicting game in the week
             }
-            if (!placeGameInSchedule(byeToSchedule, weekNum, schedule)) {
-               return null;
-            }
+            placeGameInSchedule(byeToSchedule, weekNum, schedule);
 	         schedule.byesToScheduleThisWeek--;
 	         lastScheduledBye = byeToSchedule;
 	         if (schedule.byesToScheduleThisWeek <= 0) {
@@ -1654,8 +1635,8 @@ public class NflScheduler {
       reschedAttemptsOneWeekBack = 0;
       reschedAttemptsMultiWeeksBack = 0;
 
-      int reschedAttemptedMaxWeek = 0;
       int goBackToWeekNum = 0;
+      int reschedAttemptedMaxWeek = 0;
 
       int startWeek = 1;
       int endWeek = NflDefs.numberOfWeeks;
@@ -1665,9 +1646,11 @@ public class NflScheduler {
       if (sDir == -1) {
          startWeek = NflDefs.numberOfWeeks;
          endWeek = 1;
+         reschedAttemptedMaxWeek = 1;
       } else if (sDir == 1) {
          startWeek = 1;
          endWeek = NflDefs.numberOfWeeks;
+         reschedAttemptedMaxWeek = NflDefs.numberOfWeeks;
       }
 
       // for (int weekNum=startWeek; weekNum != endWeek; weekNum +=
@@ -1731,12 +1714,7 @@ public class NflScheduler {
                // Now just reschedule the cur week until it's reschedules are exhausted
 
                goBackToWeekNum = weekNum;
-               if (sDir == -1) {
-                  reschedAttemptedMaxWeek = Math.max(goBackToWeekNum, reschedAttemptedMaxWeek);
-               } else if (sDir == 1) {
-                  reschedAttemptedMaxWeek = Math.min(goBackToWeekNum, reschedAttemptedMaxWeek);
-               }
-
+ 
                reschedAttemptsSameWeek++;
                reschedLog.add("rescheduling the current week\n");
             }
@@ -2149,7 +2127,7 @@ public class NflScheduler {
          // write the header to the file
          // partialScheduleLogBw.write("FingerPrint,Week,Iteration,Unscheduled,BaseFP,Count
          // \n");
-         partialScheduleLogBw.write("FingerPrint,Week,Iteration,Unscheduled,BaseFP,Count,GamesInWeek,HighSeqNum \n");
+         partialScheduleLogBw.write("FingerPrint,Week,Iteration,Unscheduled,BaseFP,PSE Count,GamesInWeek,HighSeqNum,Unsched Games,Unsched Byes \n");
       } catch (FileNotFoundException e) {
          e.printStackTrace();
       } catch (IOException e) {
@@ -2253,7 +2231,8 @@ public class NflScheduler {
 
          partialScheduleLogBw.write(partialScheduleEntry.fingerPrint + "," + weekNum + "," + iterNum + ","
                + partialScheduleEntry.unscheduledTeams + "," + partialScheduleEntry.baseFingerPrint + ","
-               + partialScheduleEntry.count + "," + partialScheduleEntry.gamesInWeek.size() + "," + highSeqNum + "\n");
+               + partialScheduleEntry.count + "," + partialScheduleEntry.gamesInWeek.size() + "," + highSeqNum + ","
+               + schedule.unscheduledGames.size() + "," + schedule.unscheduledByes.size() + "\n");
       } catch (IOException e) {
 			e.printStackTrace();
       } 
