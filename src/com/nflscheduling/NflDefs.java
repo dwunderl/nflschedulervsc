@@ -12,6 +12,18 @@ public class NflDefs {
 	public static int alertLimit = 4;
 	public static int hardViolationLimit = 0;
 	public static int schedulingDirection = -1;
+	
+	public enum AlgorithmType {Default,
+							   Forward,
+		                       Backward,
+		                       ForwardAndBackward
+							   }
+
+	public static AlgorithmType algorithmType = AlgorithmType.Default;
+	// String levelText = Level.HIGH.toString();
+    // Level level = Level.valueOf("HIGH");
+
+	
 
 	public NflDefs() {
 	}
