@@ -127,7 +127,9 @@ public class NflScheduler {
    public FileWriter partialScheduleLogFw = null;
    public BufferedWriter schedAttemptsLogBw = null;
    public FileWriter schedAttemptsLogFw = null;
-   
+   public BufferedWriter reschedLogBw = null;
+   public FileWriter reschedLogFw = null;
+
    public boolean init() {
       loadParams();                                 // load from nflparams.csv: NflDefs.numberOfWeeks, NflDefs.numberOfTeams
       // resched limit params are hard-coded in here, TBD: should get from a file
@@ -141,13 +143,13 @@ public class NflScheduler {
 
       if (NflDefs.algorithmType == AlgorithmType.Forward) {
          algorithm = new NflScheduleAlgForOrBack();
-         algorithm.init(this);
          NflDefs.schedulingDirection = 1;
+         algorithm.init(this);
       }
       else if (NflDefs.algorithmType == AlgorithmType.Backward) {
          algorithm = new NflScheduleAlgForOrBack();
-         algorithm.init(this);
          NflDefs.schedulingDirection = -1;
+         algorithm.init(this);
       }
       else if (NflDefs.algorithmType == AlgorithmType.ForwardAndBackward) {
          algorithm = new NflScheduleAlgForAndBack();
@@ -155,7 +157,6 @@ public class NflScheduler {
       }
       
       partialSchedules = new NflPartialScheduleEntry[NflDefs.numberOfWeeks];
-
       restrictedGames = new ArrayList<NflRestrictedGame>();
       if (!loadForcedGames(restrictedGames))
       {
@@ -185,6 +186,7 @@ public class NflScheduler {
       // initialize unscheduledGames of the curSchedule from all the modeled games
 
       openSchedAttemptsLogFile();
+      openReschedLogFile();
 
       for (scheduleAttempts = 1; scheduleAttempts < NflDefs.scheduleAttempts; scheduleAttempts++) {
          rnd = new Random();
@@ -231,6 +233,7 @@ public class NflScheduler {
       }
 
       closeSchedAttemptsLogFile();
+      closeReschedLogFile();
 
       return true;
    }
@@ -288,9 +291,6 @@ public class NflScheduler {
                   System.out.println("loadParams: SchedulingDirection set to " + NflDefs.schedulingDirection);
                } else if (token[0].equalsIgnoreCase("AlgorithmType")) {
                   NflDefs.algorithmType = AlgorithmType.valueOf(token[1]);
-                  //if (NflDefs.schedulingDirection != -1 || NflDefs.schedulingDirection != 1) {
-                  //   System.out.println("loadParams: SchedulingDirection invalid" + NflDefs.schedulingDirection);
-                  //}
                   System.out.println("loadParams: Algorithm set to " + NflDefs.algorithmType.toString());
                } else if (token[0].equalsIgnoreCase("reschedAttemptsMultiWeeksBackLimit")) {
                   NflDefs.reschedAttemptsMultiWeeksBackLimit = Integer.parseInt(token[1]);
@@ -1272,6 +1272,45 @@ public class NflScheduler {
       return true;
    }
 
+   public boolean openReschedLogFile() {
+      try {
+         reschedLogFw = new FileWriter("reschedLog.txt");
+         reschedLogBw = new BufferedWriter(reschedLogFw);
+
+         // write the header to the file
+         reschedLogBw.write(
+               "Resched Log\n");
+      } catch (FileNotFoundException e) {
+         e.printStackTrace();
+      } catch (IOException e) {
+         e.printStackTrace();
+      }
+
+      return true;
+   }
+
+   public boolean writeReschedLogFile(String s) {
+      if (reschedLogBw != null) {
+         try {
+            reschedLogBw.write(s);
+         } catch (IOException e) {
+            e.printStackTrace();
+         }
+      }
+      return true;
+   }
+
+   public boolean closeReschedLogFile() {
+      if (reschedLogBw != null) {
+         try {
+            reschedLogBw.close();
+         } catch (IOException e) {
+            e.printStackTrace();
+         }
+      }
+
+      return true;
+   }
    public boolean logSchedAttempt(int schedAttempts, NflSchedule sched, int iterNum,
                                   int lowestWeekNum, String savedScheduleName) {
       try {
@@ -1439,104 +1478,6 @@ public class NflScheduler {
       }
 
       return true;
-   }
-
-   public boolean logPartialScheduleHistory(NflSchedule schedule, int weekNum) {
-      // Construct a record for the full partial schedule up to this week
-      // Use the partial schedule fingerprint from the previous week to add onto for
-      // this week using hashcodes and the weeknum
-
-      // Create a partial schedule entry for weekNum
-      NflPartialScheduleEntry partialScheduleEntry = new NflPartialScheduleEntry();
-
-      // use a local object to access the partial schedules entry for weekNum
-      // and populate it with current schedule state information for this week
-
-      partialScheduleEntry.unscheduledTeams = 0;
-      partialScheduleEntry.fingerPrint = 0.0;
-      partialScheduleEntry.baseFingerPrint = 0.0;
-      partialScheduleEntry.count = 0;
-      partialScheduleEntry.gamesInWeek = new ArrayList<NflGameSchedule>();
-
-      // Initialize base fingerprint append new fingerprint info to - from the
-      // previous weeks fingerprint
-      // Unless this is the very last week in the schedule - where there is no
-      // previous week to get a fingerprint from
-
-      int sDir = NflDefs.schedulingDirection;
-
-      if (sDir == -1) {
-         if (weekNum < NflDefs.numberOfWeeks) {
-            partialScheduleEntry.baseFingerPrint = partialSchedules[weekNum].fingerPrint;
-            partialScheduleEntry.fingerPrint = partialScheduleEntry.baseFingerPrint;
-         }
-      } else if (sDir == 1) {
-         if (weekNum > 1) {
-            partialScheduleEntry.baseFingerPrint = partialSchedules[weekNum - 2].fingerPrint;
-            partialScheduleEntry.fingerPrint = partialScheduleEntry.baseFingerPrint;
-         }
-      }
-
-      // Extend the partial schedule fingerprint from the previous weeks from the
-      // games of this week
-      // using the hash code of each game as a unique id of each scheduled game for
-      // this week
-      // Also keep track of the unscheduled games for this week
-
-      for (NflTeamSchedule teamSchedule : schedule.teamSchedules) {
-         NflGameSchedule gameSched = teamSchedule.scheduledGames[weekNum - 1];
-         if (gameSched != null) {
-            partialScheduleEntry.fingerPrint += (double) gameSched.hashCode()
-                  * Math.pow(NflDefs.numberOfWeeks - weekNum + 1, 2);
-            if (!gameSched.isBye && !partialScheduleEntry.gamesInWeek.contains(gameSched)) {
-               partialScheduleEntry.gamesInWeek.add(gameSched);
-            }
-         } else {
-            partialScheduleEntry.unscheduledTeams++;
-         }
-      }
-
-      // Update the partial schedule fingerprint in the partial schedule repository
-      // if All teams were scheduled for this week
-
-      if (partialScheduleEntry.unscheduledTeams == 0) {
-         if (fingerPrintMap.containsKey(partialScheduleEntry.fingerPrint)) {
-            partialScheduleEntry = fingerPrintMap.get(partialScheduleEntry.fingerPrint);
-         } else {
-            fingerPrintMap.put(partialScheduleEntry.fingerPrint, partialScheduleEntry);
-         }
-
-         // partialScheduleEntry.iterNum = iterNum;
-         // partialScheduleEntry.weekNum = weekNum;
-         partialScheduleEntry.count += 1;
-         partialSchedules[weekNum - 1] = partialScheduleEntry; // store the partial schedule entry for this week
-      }
-
-      try {
-         // write the partial schedule log entry to the csv file
-         int highSeqNum = 0;
-         for (NflGameSchedule gameInWeek : partialScheduleEntry.gamesInWeek) {
-            if (gameInWeek.weekScheduleSequence > highSeqNum) {
-               highSeqNum = gameInWeek.weekScheduleSequence;
-            }
-         }
-
-         partialScheduleLogBw.write(partialScheduleEntry.fingerPrint + "," + weekNum + "," + iterNum + ","
-               + partialScheduleEntry.unscheduledTeams + "," + partialScheduleEntry.baseFingerPrint + ","
-               + partialScheduleEntry.count + "," + partialScheduleEntry.gamesInWeek.size() + "," + highSeqNum + ","
-               + schedule.unscheduledGames.size() + "," + schedule.unscheduledByes.size() + "\n");
-      } catch (IOException e) {
-			e.printStackTrace();
-      } 
-      
-      partialScheduleEntry.iterNum = iterNum;
-      partialScheduleEntry.weekNum = weekNum;
-      //partialScheduleEntry.count += 1;
-	   partialSchedules[weekNum-1] = partialScheduleEntry; // store the partial schedule entry for this week
-	   
-	   schedule.latestScheduleFingerPrint = partialScheduleEntry.fingerPrint;
-
-	   return true;
    }
 }
 

@@ -20,10 +20,6 @@ public class NflDefs {
 							   }
 
 	public static AlgorithmType algorithmType = AlgorithmType.Default;
-	// String levelText = Level.HIGH.toString();
-    // Level level = Level.valueOf("HIGH");
-
-	
 
 	public NflDefs() {
 	}

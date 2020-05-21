@@ -60,12 +60,13 @@ public class NflScheduleAlgForOrBack extends NflScheduleAlg {
            endWeek = NflDefs.numberOfWeeks;
            reschedAttemptedMaxWeek = NflDefs.numberOfWeeks;
         }
-  
+
         // for (int weekNum=startWeek; weekNum != endWeek; weekNum +=
         // NflDefs.schedulingDirection) {
         for (int weekNum = startWeek; weekNum * sDir <= endWeek * sDir; weekNum += sDir) {
            reschedAttemptsSameWeek = 0;
            terminationReason = "Beginning of week loop: " + iterNum;
+System.out.println("0:Week: " + weekNum + ", sDir: " + sDir );
 
            // System.out.println("\nscheduleUnrestrictedGames: for next week: " + weekNum);
            initPromotionInfo(schedule);
@@ -78,6 +79,7 @@ public class NflScheduleAlgForOrBack extends NflScheduleAlg {
               // increment a demotion count (0 to 1 for first time)
               // unschedule weekNum - NEW: choose a different game to demote, start with the
               // lowest scored scheduled game
+System.out.println("1:Week: " + weekNum + ", sDir: " + sDir );
   
               // Clear demotion penalties of other games - unless demotion count > 1 (demoted
               // twice) don't clear demotion penalty (a culprit)

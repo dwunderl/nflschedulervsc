@@ -84,15 +84,16 @@ public class NflScheduleAlg {
     // TBD: study and rethink if this really makes any real sense
     
     public ArrayList<NflTeamSchedule> unscheduledTeams = new ArrayList<NflTeamSchedule>();
-    
+    public int byesToScheduleThisWeek;
+    public int sDir;
+
     public boolean init(NflScheduler theScheduler) { 
         scheduler = theScheduler;
+        sDir = NflDefs.schedulingDirection;
         return true;
     }
 
     public boolean scheduleInit() {
-        int sDir = NflDefs.schedulingDirection;
-    
         lowestWeekNum = (sDir == -1) ? 1000 : 0;
         iterNum = 0;
         fingerPrintMap = new HashMap<Double, NflPartialScheduleEntry>();
@@ -124,9 +125,8 @@ public class NflScheduleAlg {
   
         // TBD:Byes - determine # of bye pairs to attempt in this week
         // byeCapacity
-        schedule.determineNumByesForWeek(weekNum);
-        // System.out.println("byesToScheduleThisWeek: " +
-        // schedule.byesToScheduleThisWeek + ", for week: " + weekNum);
+        determineNumByesForWeek(weekNum,schedule);
+        //schedule.determineNumByesForWeek(weekNum);
   
         iterNum++;
         // unscheduledTeams.clear();
@@ -162,7 +162,7 @@ public class NflScheduleAlg {
                     unscheduledTeams.add(teamSchedule);
                  }
               }
-  
+
               break;
            }
   
@@ -204,7 +204,7 @@ public class NflScheduleAlg {
     /////////////////
     // Bye Scheduling
     /////////////////
-    if (schedule.byesToScheduleThisWeek >= 2 && schedule.unscheduledByes.size() >= 2) {
+    if (byesToScheduleThisWeek >= 2 && schedule.unscheduledByes.size() >= 2) {
        // NflGameSchedule lastByeGame = scheduleNextUnrestrictedByes(schedule,
        // weekNum);
        final NflGameSchedule lastByeGame = scheduleNextUnrestrictedByes2(schedule, weekNum);
@@ -394,30 +394,30 @@ public class NflScheduleAlg {
    // TBD then work through the sorted list, scheduling an even number of byes -
    // TBD starting with the primary bye then it's unscheduled opponent byes
 
-   public NflGameSchedule scheduleNextUnrestrictedByes2(final NflSchedule schedule, final int weekNum) {
-    NflGameSchedule lastScheduledBye = null;
+public NflGameSchedule scheduleNextUnrestrictedByes2(final NflSchedule schedule, final int weekNum) {
+   NflGameSchedule lastScheduledBye = null;
    final ArrayList<NflGameSchedule> byesToSchedule = new ArrayList<NflGameSchedule>();
 
-    while (schedule.byesToScheduleThisWeek > 0) {
-        scoreUnscheduledByes(schedule.unscheduledByes, weekNum);
-       // Prefer games with multiple unscheduled byes vs 1 or 0
-       Collections.sort(schedule.unscheduledByes, NflGameSchedule.GameScheduleByeComparatorByByeCandidateScore);
+   while (byesToScheduleThisWeek > 0) {
+      scoreUnscheduledByes(schedule.unscheduledByes, weekNum);
+      // Prefer games with multiple unscheduled byes vs 1 or 0
+      Collections.sort(schedule.unscheduledByes, NflGameSchedule.GameScheduleByeComparatorByByeCandidateScore);
 
-       findMaxEvenRelatedUnscheduledByes(schedule.unscheduledByes, byesToSchedule, weekNum);
-       for (final NflGameSchedule byeToSchedule: byesToSchedule) {
-          //System.out.println("Scheduling Bye(2) in week: " + weekNum + " home team: " + byeToSchedule.homeTeamSchedule.team.teamName);
+      findMaxEvenRelatedUnscheduledByes(schedule.unscheduledByes, byesToSchedule, weekNum);
+      for (final NflGameSchedule byeToSchedule: byesToSchedule) {
+         //System.out.println("Scheduling Bye(2) in week: " + weekNum + " home team: " + byeToSchedule.homeTeamSchedule.team.teamName);
          if (byeToSchedule.score == 0) {
             //System.out.println("Scheduling score 0 Bye in week: " + weekNum + " home team: " + byeToSchedule.homeTeamSchedule.team.teamName + ", unscheduledByes: " + schedule.unscheduledByes.size() + ", byesToSchedule: " + byesToSchedule.size());
             //return null;   // the bye is unschedulable - there is a conflicting game in the week
          }
          scheduler.placeGameInSchedule(byeToSchedule, weekNum, schedule);
-          schedule.byesToScheduleThisWeek--;
-          lastScheduledBye = byeToSchedule;
-          if (schedule.byesToScheduleThisWeek <= 0) {
-             break;
-          }
-       }
-    }
+         byesToScheduleThisWeek--;
+         lastScheduledBye = byeToSchedule;
+         if (byesToScheduleThisWeek <= 0) {
+            break;
+         }
+      }
+   }
 
     return lastScheduledBye;
   }
@@ -536,7 +536,6 @@ public class NflScheduleAlg {
     return true;
  }
 
-
  public boolean logPartialScheduleHistory(final NflSchedule schedule, final int weekNum) {
     // Construct a record for the full partial schedule up to this week
     // Use the partial schedule fingerprint from the previous week to add onto for
@@ -559,15 +558,17 @@ public class NflScheduleAlg {
     // Unless this is the very last week in the schedule - where there is no
     // previous week to get a fingerprint from
 
-    final int sDir = NflDefs.schedulingDirection;
-
     if (sDir == -1) {
        if (weekNum < NflDefs.numberOfWeeks) {
+          // Going backward, there is no previous partial schedule until weekNum == 16-
+          // To base the partial schedule off of : weekNum == 17 is first partial
           partialScheduleEntry.baseFingerPrint = partialSchedules[weekNum].fingerPrint;
           partialScheduleEntry.fingerPrint = partialScheduleEntry.baseFingerPrint;
        }
     } else if (sDir == 1) {
        if (weekNum > 1) {
+          // Going forward, there is no previous partial schedule until weekNum == 2+
+          // To base the partial schedule off of : weekNum == 1 is first partial
           partialScheduleEntry.baseFingerPrint = partialSchedules[weekNum - 2].fingerPrint;
           partialScheduleEntry.fingerPrint = partialScheduleEntry.baseFingerPrint;
        }
@@ -749,5 +750,106 @@ public class NflScheduleAlg {
 
      return true;
  }
+
+ public boolean determineNumByesForWeek(int weekNum, NflSchedule schedule) {
+   // byesToScheduleThisWeek - set it
+   // remaining byeCapacity in resource "Bye" from weeknum back
+   
+   int remainingByesToSchedule = schedule.unscheduledByes.size();
+
+   byesToScheduleThisWeek = 0;
+
+   if (remainingByesToSchedule == 0) {
+      return true;
+   }
+
+   int remainingByeCapacity = 0;
+   int remainingByeMin = 0;
+   NflResourceSchedule byeResourceSchedule = schedule.findResource("Bye");
+   
+    if (byeResourceSchedule == null) {
+       return true;
+    }
+    
+    // Short circuit (temporary): exactly specified number for this week
+    // TBD: Doesnt account for forced byes in the schedule
+
+    // determine remaining bye capacity based on the specified bye resource max 
+    // reduced by the number of byes already scheduled
+    
+   // int sDir = NflDefs.schedulingDirection;
+   int weekEnd = NflDefs.numberOfWeeks;
+
+   if (sDir == -1) {
+      weekEnd = 1;
+   }
+   else if (sDir == 1) {
+      weekEnd = NflDefs.numberOfWeeks;
+   }
+   
+   // Accumulated over the remaining unscheduled weeks
+   for (int wi=weekNum; wi*sDir <= weekEnd*sDir; wi += sDir) {
+      remainingByeCapacity += byeResourceSchedule.resource.weeklyLimit[wi-1] - byeResourceSchedule.usage[wi-1];
+      remainingByeMin += byeResourceSchedule.resource.weeklyMinimum[wi-1] - byeResourceSchedule.usage[wi-1];
+   }
+   
+   // Determine number of byes already scheduled (forced) in this week
+   // Loop through all of the teamschedules, and check
+   
+   int byesScheduledThisWeek = 0;
+   
+   for (NflTeamSchedule teamSched: schedule.teamSchedules) {
+      NflGameSchedule gameInThisWeek = teamSched.scheduledGames[weekNum-1];
+      if (gameInThisWeek != null && gameInThisWeek.isBye) {
+           byesScheduledThisWeek++;
+      }
+   }
+   
+   // Determine the min and the max possible byes for this week
+   int min = Math.max(byeResourceSchedule.resource.weeklyMinimum[weekNum-1] - byesScheduledThisWeek, 0);
+   int max = Math.max(byeResourceSchedule.resource.weeklyLimit[weekNum-1] - byesScheduledThisWeek, 0);
+   
+   int adjustedMin = Math.max(byeResourceSchedule.resource.weeklyMinimum[weekNum-1] - byesScheduledThisWeek, 
+                               remainingByesToSchedule - (remainingByeCapacity - byeResourceSchedule.resource.weeklyLimit[weekNum-1]));
+   int adjustedMax = Math.min(byeResourceSchedule.resource.weeklyLimit[weekNum-1] - byesScheduledThisWeek, 
+                               remainingByesToSchedule - (remainingByeMin - byeResourceSchedule.resource.weeklyMinimum[weekNum-1]));
+
+   if (remainingByesToSchedule > remainingByeCapacity) {
+       System.out.println("   ERROR determineNumByesForWeek: For week: " + weekNum + " insufficient bye capacity: " + remainingByeCapacity + ", remainingByesToSchedule: " + remainingByesToSchedule);
+       //ERROR determineNumByesForWeek: For week: 4 insufficient bye capacity: 6.0, remainingByesToSchedule: 8.0
+   }
+   
+   // TBD: May need to adjust min so that downstream has capacity for the remaining byes
+   // i.e. maybe consider remainingByeCapacity (Max), remainingByeMin (don't compute yet), remainingByesToSchedule, 
+   // remainingByeCapacity (Max) - remainingByeMin vs remainingByesToSchedule
+   if (remainingByesToSchedule >= remainingByeCapacity) {
+      byesToScheduleThisWeek = max;
+      return true;
+   }
+   
+    // double excessAvailRatio = (remainingByeCapacity-remainingByesToSchedule)/remainingByeCapacity;
+    double randomNum  = rnd.nextDouble();
+    double useMaxByeCapacityProb = randomNum;
+    //double useMaxByeCapacityProb = excessAvailRatio*randomNum;
+    
+    //useMaxByeCapacityProb = 1.0 - useMaxByeCapacityProb;
+    //useMaxByeCapacityProb = randomNum;
+
+    //byesToScheduleThisWeek = (int) (useMaxByeCapacityProb*(max - min) + min);
+    byesToScheduleThisWeek = (int) (useMaxByeCapacityProb*(adjustedMax - adjustedMin) + adjustedMin);
+   
+   for (int bc=min; bc <= max; bc += 2) {
+      if (byesToScheduleThisWeek <= bc) {
+         byesToScheduleThisWeek = bc;
+         break;
+      }
+   }
+   
+   if (byesToScheduleThisWeek > 0) {
+       // System.out.println("   For week: " + weekNum + " byesToScheduleThisWeek: " + byesToScheduleThisWeek);
+   }
+
+   return true;
+}
 
 }
