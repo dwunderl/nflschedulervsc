@@ -86,6 +86,12 @@ public class NflScheduleAlg {
     public ArrayList<NflTeamSchedule> unscheduledTeams = new ArrayList<NflTeamSchedule>();
     public int byesToScheduleThisWeek;
     public int sDir;
+    public NflWeeklyData weeklyData = new NflWeeklyData();
+    public NflWeeklyData priorWeeklyData = null;
+
+    public int alreadyScheduledRejection;
+    public int backToBackMatchRejection;
+    public int resourceUnavailRejection;
 
     public boolean init(NflScheduler theScheduler) { 
         scheduler = theScheduler;
@@ -100,6 +106,7 @@ public class NflScheduleAlg {
         fpSkipCount = 0;
         partialSchedules = new NflPartialScheduleEntry[NflDefs.numberOfWeeks];
         rnd = new Random();
+        writeWeeklyDataHeaderToFile();
 
         return true;
      }
@@ -123,6 +130,10 @@ public class NflScheduleAlg {
         int schedSeqNum = 0;
         boolean status = true;
   
+        alreadyScheduledRejection = 0;
+        backToBackMatchRejection = 0;
+        resourceUnavailRejection = 0;
+
         // TBD:Byes - determine # of bye pairs to attempt in this week
         // byeCapacity
         determineNumByesForWeek(weekNum,schedule);
@@ -189,7 +200,7 @@ public class NflScheduleAlg {
               fpSkipCount++;
            }
         }
-  
+
         return status;
      }
   
@@ -199,141 +210,147 @@ public class NflScheduleAlg {
 
    // possibly modularize this function to facilitate scheduling a game and/or
    // scheduling a bye
-   public NflGameSchedule scheduleNextUnrestrictedGameInWeek(final NflSchedule schedule, final int weekNum) {
+     public NflGameSchedule scheduleNextUnrestrictedGameInWeek(final NflSchedule schedule, final int weekNum) {
 
-    /////////////////
-    // Bye Scheduling
-    /////////////////
-    if (byesToScheduleThisWeek >= 2 && schedule.unscheduledByes.size() >= 2) {
-       // NflGameSchedule lastByeGame = scheduleNextUnrestrictedByes(schedule,
-       // weekNum);
-       final NflGameSchedule lastByeGame = scheduleNextUnrestrictedByes2(schedule, weekNum);
+        /////////////////
+        // Bye Scheduling
+        /////////////////
+        if (byesToScheduleThisWeek >= 2 && schedule.unscheduledByes.size() >= 2) {
+           // NflGameSchedule lastByeGame = scheduleNextUnrestrictedByes(schedule,
+           // weekNum);
+           final NflGameSchedule lastByeGame = scheduleNextUnrestrictedByes2(schedule, weekNum);
 
-       return lastByeGame;
-    }
+           return lastByeGame;
+        }
 
-    // Make a collection of unscheduled games
-    // where none of the teams are scheduled for this week
+        // Make a collection of unscheduled games
+        // where none of the teams are scheduled for this week
 
-    final ArrayList<NflGameSchedule> candidateGames = new ArrayList<NflGameSchedule>();
+        final ArrayList<NflGameSchedule> candidateGames = new ArrayList<NflGameSchedule>();
 
-    for (int gi = 0; gi < schedule.unscheduledGames.size(); gi++) {
-       final NflGameSchedule usgame = schedule.unscheduledGames.get(gi);
-       final NflTeamSchedule homeTeam = usgame.homeTeamSchedule;
-       final NflTeamSchedule awayTeam = usgame.awayTeamSchedule;
+        for (int gi = 0; gi < schedule.unscheduledGames.size(); gi++) {
+           final NflGameSchedule usgame = schedule.unscheduledGames.get(gi);
+           final NflTeamSchedule homeTeam = usgame.homeTeamSchedule;
+           final NflTeamSchedule awayTeam = usgame.awayTeamSchedule;
 
-       usgame.unscheduledByes.clear(); // clear the byes so byes can be set accurately during this scheduling pass
+           usgame.unscheduledByes.clear(); // clear the byes so byes can be set accurately during this scheduling pass
 
-       // Validate that neither team from the game is already scheduled for this week
+           // Validate that neither team from the game is already scheduled for this week
 
-       if (homeTeam.scheduledGames[weekNum - 1] != null) {
-          // System.out.println("Info: schedUnrest: team already scheduled in week: " +
-          // weekNum + " home team: " + homeTeam.team.teamName + " away team: " +
-          // awayTeam.team.teamName + ", skip");
-          continue;
-       } else if (!usgame.isBye && awayTeam.scheduledGames[weekNum - 1] != null) {
-          // System.out.println("Info: schedUnrest: team already scheduled in week: " +
-          // weekNum + " away team: " + awayTeam.team.teamName + " home team: " +
-          // homeTeam.team.teamName + ", skip");
-          continue;
-       }
+           if (homeTeam.scheduledGames[weekNum - 1] != null) {
+              // System.out.println("Info: schedUnrest: team already scheduled in week: " +
+              // weekNum + " home team: " + homeTeam.team.teamName + " away team: " +
+              // awayTeam.team.teamName + ", skip");
+              alreadyScheduledRejection++;
+              continue;
+           } else if (!usgame.isBye && awayTeam.scheduledGames[weekNum - 1] != null) {
+              // System.out.println("Info: schedUnrest: team already scheduled in week: " +
+              // weekNum + " away team: " + awayTeam.team.teamName + " home team: " +
+              // homeTeam.team.teamName + ", skip");
+              alreadyScheduledRejection++;
+              continue;
+           }
 
-       // Verify that the game is not a repeated matchup - either before or after this
-       // week - unacceptable
-       // Verify first that the next week would not cause a repeated matchup
-       if (weekNum + 1 <= NflDefs.numberOfWeeks) {
-          final NflGameSchedule nextWeeksGame = homeTeam.scheduledGames[weekNum]; // NOTE: weekNum starts at 1, must
-                                                                                  // correct for index
-          if (nextWeeksGame != null && !nextWeeksGame.isBye) {
-             if (nextWeeksGame.game.awayTeam.equalsIgnoreCase(usgame.game.homeTeam)
-                   && nextWeeksGame.game.homeTeam.equalsIgnoreCase(usgame.game.awayTeam)) {
-                continue;
-             }
-          }
-       }
+           // Verify that the game is not a repeated matchup - either before or after this
+           // week - unacceptable
+           // Verify first that the next week would not cause a repeated matchup
+           if (weekNum + 1 <= NflDefs.numberOfWeeks) {
+              final NflGameSchedule nextWeeksGame = homeTeam.scheduledGames[weekNum]; // NOTE: weekNum starts at 1, must
+                                                                                      // correct for index
+              if (nextWeeksGame != null && !nextWeeksGame.isBye) {
+                 if (nextWeeksGame.game.awayTeam.equalsIgnoreCase(usgame.game.homeTeam)
+                       && nextWeeksGame.game.homeTeam.equalsIgnoreCase(usgame.game.awayTeam)) {
+                    backToBackMatchRejection++;
+                    continue;
+                 }
+              }
+           }
+ 
+           // Verify next that the previous week would not cause a repeated matchup
+           if (weekNum > 1) {
+              final NflGameSchedule nextWeeksGame = homeTeam.scheduledGames[weekNum - 2]; // NOTE: weekNum starts at 1,
+                                                                                          // must correct for index
+              if (nextWeeksGame != null && !nextWeeksGame.isBye) {
+                 if (nextWeeksGame.game.awayTeam.equalsIgnoreCase(usgame.game.homeTeam)
+                       && nextWeeksGame.game.homeTeam.equalsIgnoreCase(usgame.game.awayTeam)) {
+                    backToBackMatchRejection++;
+                    continue;
+                 }
+              }
+           }
 
-       // Verify next that the previous week would not cause a repeated matchup
-       if (weekNum > 1) {
-          final NflGameSchedule nextWeeksGame = homeTeam.scheduledGames[weekNum - 2]; // NOTE: weekNum starts at 1,
-                                                                                      // must correct for index
-          if (nextWeeksGame != null && !nextWeeksGame.isBye) {
-             if (nextWeeksGame.game.awayTeam.equalsIgnoreCase(usgame.game.homeTeam)
-                   && nextWeeksGame.game.homeTeam.equalsIgnoreCase(usgame.game.awayTeam)) {
-                continue;
-             }
-          }
-       }
+           // Verify that global attrlimit matches have remaining capacity in the
+           // restricted weeknum
+           // for any unscheduled game attributes that have a global resource: e.g. bye,
+           // GiantsJetsStadium
 
-       // Verify that global attrlimit matches have remaining capacity in the
-       // restricted weeknum
-       // for any unscheduled game attributes that have a global resource: e.g. bye,
-       // GiantsJetsStadium
+           boolean resourcePass = true;
+           if (homeTeam.team.stadium != null) {
+              final String stadiumName = homeTeam.team.stadium;
 
-       boolean resourcePass = true;
-       if (homeTeam.team.stadium != null) {
-          final String stadiumName = homeTeam.team.stadium;
+              final NflResourceSchedule resourceSchedule = schedule.findResource(stadiumName);
+              if (resourceSchedule != null && !resourceSchedule.hasCapacity(weekNum)) {
+                 resourcePass = false;
+              }
+           }
 
-          final NflResourceSchedule resourceSchedule = schedule.findResource(stadiumName);
-          if (resourceSchedule != null && !resourceSchedule.hasCapacity(weekNum)) {
-             resourcePass = false;
-          }
-       }
+           // clear the bye information from the game, array list and flag ?? TBD
+           usgame.unscheduledByes.clear();
 
-       // clear the bye information from the game, array list and flag ?? TBD
-       usgame.unscheduledByes.clear();
+           if (!resourcePass) {
+              resourceUnavailRejection++;
+              continue; // resource capacity would be exceeded - byes, or JetsGiantsStadium
+           }
 
-       if (!resourcePass) {
-          continue; // resource capacity would be exceeded - byes, or JetsGiantsStadium
-       }
+           candidateGames.add(usgame);
+        }
 
-       candidateGames.add(usgame);
-    }
+        if (candidateGames.isEmpty()) {
+           return null;
+        }
 
-    if (candidateGames.isEmpty()) {
-       // System.out.println("Info: No candidate games in week: " + weekNum);
-       return null;
-    }
+        for (final NflGameSchedule usgame : candidateGames) {
+           usgame.computeMetrics(weekNum, schedule, candidateGames);
+        }
 
-    for (final NflGameSchedule usgame : candidateGames) {
-       usgame.computeMetrics(weekNum, schedule, candidateGames);
-       // System.out.println("Info: Unrestricted Candidate game, weekNum: " + weekNum +
-       // " home team: " + usgame.game.homeTeam + " away team: " + usgame.game.awayTeam
-       // + ", score: " + usgame.score);
-    }
+        //////////////////
+        // Game Scheduling
+        //////////////////
 
-    //////////////////
-    // Game Scheduling
-    //////////////////
+        NflGameSchedule chosenGame = null;
 
-    NflGameSchedule chosenGame = null;
+        if (!unscheduledTeams.isEmpty()) {
+           final NflTeamSchedule unscheduledTeam = unscheduledTeams.remove(0);
+           chosenGame = chooseBestScoringGame(candidateGames, unscheduledTeam);
+        }
 
-    if (!unscheduledTeams.isEmpty()) {
-       final NflTeamSchedule unscheduledTeam = unscheduledTeams.remove(0);
-       chosenGame = chooseBestScoringGame(candidateGames, unscheduledTeam);
-    }
+        if (chosenGame == null) {
+           // Why would chosenGame be null ?
+           // There wasn't a game for the selected unscheduledTeam ?
+           // Possibly candidate games eliminated, repeated matchup, stadium, other
+           chosenGame = scheduler.chooseBestScoringGame(candidateGames);
+        }
 
-    if (chosenGame == null) {
-       // Why would chosenGame be null ?
-       // There wasn't a game for the selected unscheduledTeam ?
-       // Possibly candidate games eliminated, repeated matchup, stadium, other
-       chosenGame = scheduler.chooseBestScoringGame(candidateGames);
-    }
+        chosenGame.candidateCount = candidateGames.size();
 
-    chosenGame.candidateCount = candidateGames.size();
+        // TBD: also need a function to write out the weeklyData csv line
+        // TBD: also need a function write out the weeklyData header
 
-    if (!scheduler.placeGameInSchedule(chosenGame, weekNum, schedule)) {
-       return null;
-    }
+        logWeeklyDataFromScheduledGame(chosenGame);
 
-    // just chose one game, need to keep choosing until week is full
-    // or no more games can be chosen
-    // algorithm should be aware if a week is not full - and report
+        if (!scheduler.placeGameInSchedule(chosenGame, weekNum, schedule)) {
+           return null;
+        }
 
-    return chosenGame;
- }
+        // just chose one game, need to keep choosing until week is full
+        // or no more games can be chosen
+        // algorithm should be aware if a week is not full - and report
+
+        return chosenGame;
+     }
 
  public boolean findMaxEvenRelatedUnscheduledByes(final ArrayList<NflGameSchedule> sortedUnscheduledByes,
-       final ArrayList<NflGameSchedule> byesToSchedule, final int weekNum) {
+                                                  final ArrayList<NflGameSchedule> byesToSchedule, final int weekNum) {
     byesToSchedule.clear();
 
     final NflGameSchedule primaryUnscheduledBye = sortedUnscheduledByes.get(0);
@@ -845,10 +862,67 @@ public NflGameSchedule scheduleNextUnrestrictedByes2(final NflSchedule schedule,
       }
    }
    
-   if (byesToScheduleThisWeek > 0) {
-       // System.out.println("   For week: " + weekNum + " byesToScheduleThisWeek: " + byesToScheduleThisWeek);
-   }
+   return true;
+}
 
+public boolean logWeeklyDataFromScheduledGame(NflGameSchedule scheduledGame) {
+   if (scheduler.reschedLogOn) {
+      for (int mi = 0; mi < scheduledGame.metrics.size(); mi++) {
+         NflGameMetric gameMetric = scheduledGame.metrics.get(mi);
+
+         // accumulate the score into the metric map element
+
+         float metricScore = weeklyData.gameMetrics.get(gameMetric.metricName);
+         metricScore += gameMetric.score * gameMetric.weight;
+         weeklyData.gameMetrics.put(gameMetric.metricName, metricScore);
+
+         if (gameMetric.hardViolation) {
+            weeklyData.hardViolationCount++;
+         }
+      }
+      weeklyData.score += scheduledGame.score;
+      weeklyData.demotionPenalty += scheduledGame.demotionPenalty;
+   }
+   return true;
+}
+
+public boolean writeWeeklyDataHeaderToFile() {
+   if (scheduler.reschedLogOn) {
+      scheduler.writeReschedLogFile("week,success,retry,sDirection" + ",sByes,sGames,usTeams,usGames,usByes"
+            + ",fWeekSched,bWeekSched,alreadySched,BackToBack" + ",ResUnavail,nWeeksBack,pSuccess,pRetry,pNWeeksBack"
+            + ",hardVios,score,demotionPenalty");
+
+      NflGameSchedule gameSchedule = curSchedule.unscheduledGames.get(1);
+      for (int mi = 0; mi < gameSchedule.metrics.size(); mi++) {
+         NflGameMetric gameMetric = gameSchedule.metrics.get(mi);
+         scheduler.writeReschedLogFile("," + gameMetric.metricName);
+      }
+
+      scheduler.writeReschedLogFile("\n");
+   }
+   return true;
+}
+
+public boolean writeWeeklyDataToFile() {
+   if (scheduler.reschedLogOn) {
+      scheduler.writeReschedLogFile(weeklyData.weekNum + "," + weeklyData.success + ","
+            + weeklyData.weekResult.toString() + "," + weeklyData.schedulingDirection + ",");
+      scheduler.writeReschedLogFile(weeklyData.scheduledByes + "," + weeklyData.scheduledGames + ","
+            + weeklyData.unscheduledTeams + "," + weeklyData.unscheduledGames + "," + weeklyData.unscheduledByes + ","
+            + weeklyData.forwardWeekScheduled + "," + weeklyData.backwardWeekScheduled + ","
+            + weeklyData.alreadyScheduledRejection + "," + weeklyData.backToBackMatchRejection + ","
+            + weeklyData.resourceUnavailRejection + "," + weeklyData.numWeeksBack + "," + weeklyData.priorSuccess + ","
+            + weeklyData.priorWeekResult.toString() + "," + weeklyData.priorNumWeeksBack + ","
+            + weeklyData.hardViolationCount + "," + weeklyData.score + "," + weeklyData.demotionPenalty);
+
+      for (Map.Entry<String, Float> entry : weeklyData.gameMetrics.entrySet()) {
+         // NflGameMetric gm = entry.getKey();
+         Float accumScore = entry.getValue();
+         scheduler.writeReschedLogFile("," + accumScore.toString());
+      }
+
+      scheduler.writeReschedLogFile("\n");
+   }
    return true;
 }
 

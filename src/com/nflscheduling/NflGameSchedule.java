@@ -101,26 +101,27 @@ public class NflGameSchedule {
    }
 
    public boolean computeMetrics(int weekNum, NflSchedule schedule, ArrayList<NflGameSchedule> candidateGames) {
-	  score = 0.0;
-	  hardViolationCount = 0;
-	  
-      for (int mi=0; mi < metrics.size(); mi++) {
-	      NflGameMetric gameMetric = metrics.get(mi);
-	      //System.out.println("Computing Metric: " + gameMetric.metricName + " for game: " + game.homeTeam + " : " + game.awayTeam);
-	      gameMetric.computeMetric(weekNum, schedule, candidateGames);
-	      score += gameMetric.score*gameMetric.weight;
-	      if (gameMetric.hardViolation) {
-	    	   hardViolationCount++;
-	      }
-      }
-      
-      //score += demotionPenalty + promotionScore;
-      score += demotionPenalty;
-      //score += promotionScore;
+      score = 0.0;
+      hardViolationCount = 0;
 
-      //if (demotionPenalty != 0.0)
-      //System.out.println("Computed Metric: " + score + ", including demotionPenalty of " + demotionPenalty + ", weekSequence: " + weekScheduleSequence + " for game: " + game.homeTeam + " : " + game.awayTeam);
-	 
+      for (int mi = 0; mi < metrics.size(); mi++) {
+         NflGameMetric gameMetric = metrics.get(mi);
+         gameMetric.computeMetric(weekNum, schedule, candidateGames);
+         score += gameMetric.score * gameMetric.weight;
+         if (gameMetric.hardViolation) {
+            hardViolationCount++;
+         }
+      }
+
+      // score += demotionPenalty + promotionScore;
+      score += demotionPenalty;
+      // score += promotionScore;
+
+      // if (demotionPenalty != 0.0)
+      // System.out.println("Computed Metric: " + score + ", including demotionPenalty
+      // of " + demotionPenalty + ", weekSequence: " + weekScheduleSequence + " for
+      // game: " + game.homeTeam + " : " + game.awayTeam);
+
       return true;
    }
    

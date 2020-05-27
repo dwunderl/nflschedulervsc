@@ -1,11 +1,11 @@
 NumberOfWeeks,17
 NumberOfTeams,32
 SchedulingDirection,1
-reschedAttemptsMultiWeeksBackLimit,25
-reschedAttemptsOneWeekBackLimit,20
-reschedAttemptsSameWeekLimit,20
+reschedAttemptsMultiWeeksBackLimit,40
+reschedAttemptsOneWeekBackLimit,30
+reschedAttemptsSameWeekLimit,30
 scheduleAttempts,31
-savedScheduleLimit,10
+savedScheduleLimit,3
 alertLimit,3
 hardViolationLimit,0
-algorithmType,Forward
+algorithmType,Backward

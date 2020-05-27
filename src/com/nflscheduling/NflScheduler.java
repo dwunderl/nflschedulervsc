@@ -129,6 +129,7 @@ public class NflScheduler {
    public FileWriter schedAttemptsLogFw = null;
    public BufferedWriter reschedLogBw = null;
    public FileWriter reschedLogFw = null;
+   public boolean reschedLogOn = false;
 
    public boolean init() {
       loadParams();                                 // load from nflparams.csv: NflDefs.numberOfWeeks, NflDefs.numberOfTeams
@@ -526,12 +527,6 @@ public class NflScheduler {
                   NflRestrictedGame restrictedGame = new NflRestrictedGame(team.teamName, weekNum, restriction,
                         otherTeamName, stadium);
                   weeks.add(restrictedGame);
-
-                  // System.out.println("line token length: " + token.length);
-                  // System.out.println("Restricted game: week: " + weekNum + ", Team: " +
-                  // team.teamName + ", restriction: " + restriction);
-                  // System.out.println("Restricted game: week: " + weekNum + ", Team: " +
-                  // teamSchedule.team.teamName + ", restriction: " + restriction);
                }
             } else {
                NflRestrictedGame restrictedGame = new NflRestrictedGame(teamName, weekNum, restriction,
@@ -954,8 +949,7 @@ public class NflScheduler {
                   + " for away team: " + xGame.game.awayTeam + ", isBye: " + xGame.isBye + ", isRestricted: "
                   + xGame.restrictedGame);
          }
-         // System.out.println("Rescheduled Weeks: " + reschedLog.size() + ", Reschedule
-         // Week Iterations: " + iterNum);
+
          return false;
       }
 
@@ -1115,16 +1109,6 @@ public class NflScheduler {
          }
          bw.write("\n");
 
-         // System.out.println("reschedWeekNum: " + reschedWeekNum);
-
-         // System.out.println("Weeks Schedule Attempts: " + iterNum + " (Iterations:
-         // Failed+Successful unique)");
-         if (!reschedLog.isEmpty()) {
-            // System.out.println(reschedLog.get(reschedLog.size()-1));
-            // System.out.println("Failed Weeks: " + reschedLog.size()/2 + " (Incomplete,
-            // Identical.Complete.skip)");
-         }
-
          // System.out.println("Unique,Successful Weeks: " + fingerPrintMap.size() + "
          // (Unique FP collection size)");
          // System.out.println("Repeated,Successful Weeks: " + fpSkipCount + "
@@ -1273,44 +1257,51 @@ public class NflScheduler {
    }
 
    public boolean openReschedLogFile() {
-      try {
-         reschedLogFw = new FileWriter("reschedLog.txt");
-         reschedLogBw = new BufferedWriter(reschedLogFw);
+      if (reschedLogOn) {
+         try {
+            reschedLogFw = new FileWriter("reschedLog.csv");
+            reschedLogBw = new BufferedWriter(reschedLogFw);
 
-         // write the header to the file
-         reschedLogBw.write(
-               "Resched Log\n");
-      } catch (FileNotFoundException e) {
-         e.printStackTrace();
-      } catch (IOException e) {
-         e.printStackTrace();
+            // write the header to the file
+            reschedLogBw.write("Resched Log\n");
+         } catch (FileNotFoundException e) {
+            e.printStackTrace();
+         } catch (IOException e) {
+            e.printStackTrace();
+         }
       }
 
       return true;
    }
 
    public boolean writeReschedLogFile(String s) {
-      if (reschedLogBw != null) {
-         try {
-            reschedLogBw.write(s);
-         } catch (IOException e) {
-            e.printStackTrace();
+      if (reschedLogOn) {
+         if (reschedLogBw != null) {
+            try {
+               reschedLogBw.write(s);
+            } catch (IOException e) {
+               e.printStackTrace();
+            }
          }
       }
+
       return true;
    }
 
    public boolean closeReschedLogFile() {
-      if (reschedLogBw != null) {
-         try {
-            reschedLogBw.close();
-         } catch (IOException e) {
-            e.printStackTrace();
+      if (reschedLogOn) {
+         if (reschedLogBw != null) {
+            try {
+               reschedLogBw.close();
+            } catch (IOException e) {
+               e.printStackTrace();
+            }
          }
       }
 
       return true;
    }
+
    public boolean logSchedAttempt(int schedAttempts, NflSchedule sched, int iterNum,
                                   int lowestWeekNum, String savedScheduleName) {
       try {

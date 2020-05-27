@@ -1,17 +1,17 @@
 package com.nflscheduling;
 
 public class NflScheduleAlgForAndBack extends NflScheduleAlg {
+   public int fWeekScheduled = 0;
+   public int bWeekScheduled = NflDefs.numberOfWeeks + 1;
+   public int remWeeksToSchedule = bWeekScheduled - fWeekScheduled - 1;
+   public boolean fWeekSuccess = true;
+   public boolean bWeekSuccess = true;
+   public int numWeeksBack = 0;
+   public int weekNum = 0;
 
    @Override
    public boolean scheduleUnrestrictedGames(final NflSchedule schedule) {
 
-      int fWeekScheduled = 0;
-      int bWeekScheduled = NflDefs.numberOfWeeks + 1;
-      int remWeeksToSchedule = bWeekScheduled - fWeekScheduled - 1;
-      boolean fWeekSuccess = true;
-      boolean bWeekSuccess = true;
-      int numWeeksBack = 0;
-      int weekNum = 0;
       boolean status = true;
 
       reschedAttemptsMultiWeeksBack = 0;
@@ -38,6 +38,8 @@ public class NflScheduleAlgForAndBack extends NflScheduleAlg {
          initPromotionInfo(schedule);
          unscheduledTeams.clear();
 
+         logWeeklyDataWeekStart(schedule);
+
          if (scheduleUnrestrictedWeek(schedule, weekNum)) {
             if (sDir == -1) {
                bWeekSuccess = true;
@@ -48,12 +50,14 @@ public class NflScheduleAlgForAndBack extends NflScheduleAlg {
                fWeekScheduled = weekNum;
             }
             remWeeksToSchedule = bWeekScheduled - fWeekScheduled - 1;
-
+/*
             scheduler.writeReschedLogFile("Successful week: " + weekNum + ", sDir: " + sDir + ", fweeks: " + fWeekScheduled +
                                           ", bweeks: " + bWeekScheduled + ", remWeeks: " + remWeeksToSchedule +
                                           ", fWeekSucceess: " + fWeekSuccess + ", bWeekSucceess: " + bWeekSuccess +
                                           ", us games/byes: " + schedule.unscheduledGames.size() + "/" + schedule.unscheduledByes.size() +
                                           ", us Tms: " + unscheduledTeams.size() + "\n");
+*/
+            logWeeklyDataWeekScheduleAttempt(schedule, NflWeeklyData.weekScheduleResultType.success);
 
             sDir *= -1;  // reverse the scheduling direction
             reschedAttemptsSameWeek = 0;
@@ -73,11 +77,15 @@ public class NflScheduleAlgForAndBack extends NflScheduleAlg {
                terminationReason = "Failed to schedule all unrestricted games in week: " + weekNum + ", low Week: " + lowestWeekNum;
                // TBD - need something other than lowestWeekNum to show progress - maybe 
                status = false;
-               scheduler.writeReschedLogFile("   Fail+Exhaust Multi week retries:Week: " + weekNum + ", sDir: " + sDir + 
-                                             ", fWeekSucc: " + fWeekSuccess + ", bWeekSucc: " + bWeekSuccess + ", fWeekHighest: " + fWeekHighest + 
-                                             ", bWeekLowest: " + bWeekLowest + 
-                                             ", us games/byes: " + schedule.unscheduledGames.size() + "/" + schedule.unscheduledByes.size() +
-                                             ", us Tms: " + unscheduledTeams.size() + "\n");
+/*
+               scheduler.writeReschedLogFile(
+                     "   Fail+Exhaust Multi week retries:Week: " + weekNum + ", sDir: " + sDir + ", fWeekSucc: "
+                           + fWeekSuccess + ", bWeekSucc: " + bWeekSuccess + ", fWeekHighest: " + fWeekHighest
+                           + ", bWeekLowest: " + bWeekLowest + ", us games/byes: " + schedule.unscheduledGames.size()
+                           + "/" + schedule.unscheduledByes.size() + ", us Tms: " + unscheduledTeams.size() + "\n");
+*/
+               logWeeklyDataWeekScheduleAttempt(schedule, NflWeeklyData.weekScheduleResultType.failExhaustAllRetries);
+
                break;
             }
             else if (reschedAttemptsSameWeek >= NflDefs.reschedAttemptsSameWeekLimit) {
@@ -114,11 +122,15 @@ public class NflScheduleAlgForAndBack extends NflScheduleAlg {
                   reschedAttemptsSameWeek = 0;
 
                   remWeeksToSchedule = bWeekScheduled - fWeekScheduled - 1;
+/*
                   scheduler.writeReschedLogFile("   Fail-exhaust same week: " + weekNum + ", both dirs, multi-week retry: " + numWeeksBack + ", sDir: " + sDir + ", fweeks: " + fWeekScheduled +
                                                 ", bweeks: " + bWeekScheduled + ", remWeeks: " + remWeeksToSchedule +
                                                 ", fWeekSucc: " + fWeekSuccess + ", bWeekSucc: " + bWeekSuccess +
                                                 ", us games/byes: " + schedule.unscheduledGames.size() + "/" + schedule.unscheduledByes.size() +
                                                 ", us Tms: " + unscheduledTeams.size() + "\n");
+*/
+                  logWeeklyDataWeekScheduleAttempt(schedule, NflWeeklyData.weekScheduleResultType.failMultiWeeksBack);
+
                   unscheduledTeams.clear();
                   sDir *= -1;  // reverse the scheduling direction
                   bWeekSuccess = true;
@@ -132,11 +144,15 @@ public class NflScheduleAlgForAndBack extends NflScheduleAlg {
                   boolean shouldClearHistory = true;
                   unscheduleUnrestrictedWeek(schedule, weekNum, shouldClearHistory);
                   updateDemotionInfo(schedule, weekNum); 
+/*
                   scheduler.writeReschedLogFile("   Fail-exhaust same week: " + weekNum + ", in 1 dir, retry other way: " + ", sDir: " + sDir + ", fweeks: " + fWeekScheduled +
                                                 ", bweeks: " + bWeekScheduled + ", remWeeks: " + remWeeksToSchedule +
                                                 ", fWeekSucc: " + fWeekSuccess + ", bWeekSucc: " + bWeekSuccess +
                                                 ", us games/byes: " + schedule.unscheduledGames.size() + "/" + schedule.unscheduledByes.size() +
                                                 ", us Tms: " + unscheduledTeams.size() + "\n");
+*/
+                  logWeeklyDataWeekScheduleAttempt(schedule, NflWeeklyData.weekScheduleResultType.failChangeDir);
+
                   unscheduledTeams.clear();
                   reschedAttemptsSameWeek=0;
 
@@ -148,19 +164,72 @@ public class NflScheduleAlgForAndBack extends NflScheduleAlg {
                boolean shouldClearHistory = true;
                unscheduleUnrestrictedWeek(schedule, weekNum, shouldClearHistory);
                updateDemotionInfo(schedule, weekNum); 
-               scheduler.writeReschedLogFile("   Fail-under same week limit: " + weekNum + ", retry same week: " + ", sDir: " + sDir + ", fweeks: " + fWeekScheduled +
-                                             ", bweeks: " + bWeekScheduled + ", remWeeks: " + remWeeksToSchedule +
-                                             ", fWeekSucc: " + fWeekSuccess + ", bWeekSucc: " + bWeekSuccess +
-                                             ", us games/byes: " + schedule.unscheduledGames.size() + "/" + schedule.unscheduledByes.size() +
-                                             ", us Teams: " + unscheduledTeams.size() + "\n");               // repeat the same week, first unschedule 
+/*
+               scheduler.writeReschedLogFile("   Fail-under same week limit: " + weekNum + ", retry same week: "
+                     + ", sDir: " + sDir + ", fweeks: " + fWeekScheduled + ", bweeks: " + bWeekScheduled
+                     + ", remWeeks: " + remWeeksToSchedule + ", fWeekSucc: " + fWeekSuccess + ", bWeekSucc: "
+                     + bWeekSuccess + ", us games/byes: " + schedule.unscheduledGames.size() + "/"
+                     + schedule.unscheduledByes.size() + ", us Teams: " + unscheduledTeams.size() + "\n"); 
+*/
+
+               logWeeklyDataWeekScheduleAttempt(schedule, NflWeeklyData.weekScheduleResultType.failRepeatSameWeek);
+                           
                unscheduledTeams.clear();
                reschedAttemptsSameWeek++;
             }
          }
 
+         // write it out here
+         writeWeeklyDataToFile();
+
          remWeeksToSchedule = bWeekScheduled - fWeekScheduled - 1;
       }
 
       return status;
+   }
+
+   public boolean logWeeklyDataWeekStart(NflSchedule schedule) {
+      if (scheduler.reschedLogOn) {
+         priorWeeklyData = weeklyData;
+         weeklyData = new NflWeeklyData();
+         weeklyData.init(schedule.unscheduledGames.get(1));
+         weeklyData.weekNum = weekNum;
+         weeklyData.schedulingDirection = sDir;
+         if (priorWeeklyData != null) {
+            weeklyData.priorSuccess = priorWeeklyData.success;
+            weeklyData.priorNumWeeksBack = priorWeeklyData.numWeeksBack;
+            weeklyData.priorWeekResult = priorWeeklyData.weekResult;
+         }
+      }
+      return true;
+   }
+
+   public boolean logWeeklyDataWeekScheduleAttempt(NflSchedule schedule,
+                                                   NflWeeklyData.weekScheduleResultType weekScheduleResult) {
+      if (scheduler.reschedLogOn) {
+         if (weekScheduleResult == NflWeeklyData.weekScheduleResultType.success) {
+            weeklyData.success = true;
+         } else {
+            weeklyData.success = false;
+         }
+         weeklyData.weekResult = weekScheduleResult;
+         weeklyData.backwardWeekScheduled = bWeekScheduled;
+         weeklyData.forwardWeekScheduled = fWeekScheduled;
+         weeklyData.numWeeksBack = 0;
+         if (weekScheduleResult == NflWeeklyData.weekScheduleResultType.failMultiWeeksBack) {
+            weeklyData.numWeeksBack = numWeeksBack;
+         }
+         weeklyData.scheduledByes = byesToScheduleThisWeek;
+         weeklyData.scheduledGames = NflDefs.numberOfTeams / 2 - unscheduledTeams.size() / 2
+               - byesToScheduleThisWeek / 2;
+         weeklyData.unscheduledByes = schedule.unscheduledByes.size();
+         weeklyData.unscheduledGames = schedule.unscheduledGames.size();
+         weeklyData.unscheduledTeams = unscheduledTeams.size();
+
+         weeklyData.alreadyScheduledRejection = alreadyScheduledRejection;
+         weeklyData.backToBackMatchRejection = backToBackMatchRejection;
+         weeklyData.resourceUnavailRejection = resourceUnavailRejection;
+      }
+      return true;
    }
 }
