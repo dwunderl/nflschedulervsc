@@ -1,13 +1,13 @@
 package com.nflscheduling;
 
 public class NflScheduleAlgForAndBack extends NflScheduleAlg {
-   public int fWeekScheduled = 0;
-   public int bWeekScheduled = NflDefs.numberOfWeeks + 1;
-   public int remWeeksToSchedule = bWeekScheduled - fWeekScheduled - 1;
-   public boolean fWeekSuccess = true;
-   public boolean bWeekSuccess = true;
-   public int numWeeksBack = 0;
-   public int weekNum = 0;
+   //public int fWeekScheduled = 0;
+   //public int bWeekScheduled = NflDefs.numberOfWeeks + 1;
+   //public int remWeeksToSchedule = bWeekScheduled - fWeekScheduled - 1;
+   //public boolean fWeekSuccess = true;
+   //public boolean bWeekSuccess = true;
+   //public int numWeeksBack = 0;
+   //public int weekNum = 0;
 
    @Override
    public boolean scheduleUnrestrictedGames(final NflSchedule schedule) {
@@ -17,12 +17,14 @@ public class NflScheduleAlgForAndBack extends NflScheduleAlg {
       reschedAttemptsMultiWeeksBack = 0;
 
       initPromotionInfo(schedule);
-      unscheduledTeams.clear();
 
       int bWeekLowest = 1000;
       int fWeekHighest = 0;
 
       sDir = -1;
+      fWeekScheduled = 0;
+      bWeekScheduled = NflDefs.numberOfWeeks + 1;
+      remWeeksToSchedule = bWeekScheduled - fWeekScheduled - 1;
 
       while(remWeeksToSchedule > 0) {
          if (sDir == -1) {
@@ -36,7 +38,6 @@ public class NflScheduleAlgForAndBack extends NflScheduleAlg {
          if (fWeekScheduled > fWeekHighest) fWeekHighest = fWeekScheduled;
          
          initPromotionInfo(schedule);
-         unscheduledTeams.clear();
 
          logWeeklyDataWeekStart(schedule);
 
@@ -50,17 +51,12 @@ public class NflScheduleAlgForAndBack extends NflScheduleAlg {
                fWeekScheduled = weekNum;
             }
             remWeeksToSchedule = bWeekScheduled - fWeekScheduled - 1;
-/*
-            scheduler.writeReschedLogFile("Successful week: " + weekNum + ", sDir: " + sDir + ", fweeks: " + fWeekScheduled +
-                                          ", bweeks: " + bWeekScheduled + ", remWeeks: " + remWeeksToSchedule +
-                                          ", fWeekSucceess: " + fWeekSuccess + ", bWeekSucceess: " + bWeekSuccess +
-                                          ", us games/byes: " + schedule.unscheduledGames.size() + "/" + schedule.unscheduledByes.size() +
-                                          ", us Tms: " + unscheduledTeams.size() + "\n");
-*/
+
             logWeeklyDataWeekScheduleAttempt(schedule, NflWeeklyData.weekScheduleResultType.success);
 
             sDir *= -1;  // reverse the scheduling direction
             reschedAttemptsSameWeek = 0;
+            numWeeksBack = 0;
          }
          else {
             // failed to schedule weekNum for this direction
@@ -77,13 +73,7 @@ public class NflScheduleAlgForAndBack extends NflScheduleAlg {
                terminationReason = "Failed to schedule all unrestricted games in week: " + weekNum + ", low Week: " + lowestWeekNum;
                // TBD - need something other than lowestWeekNum to show progress - maybe 
                status = false;
-/*
-               scheduler.writeReschedLogFile(
-                     "   Fail+Exhaust Multi week retries:Week: " + weekNum + ", sDir: " + sDir + ", fWeekSucc: "
-                           + fWeekSuccess + ", bWeekSucc: " + bWeekSuccess + ", fWeekHighest: " + fWeekHighest
-                           + ", bWeekLowest: " + bWeekLowest + ", us games/byes: " + schedule.unscheduledGames.size()
-                           + "/" + schedule.unscheduledByes.size() + ", us Tms: " + unscheduledTeams.size() + "\n");
-*/
+
                logWeeklyDataWeekScheduleAttempt(schedule, NflWeeklyData.weekScheduleResultType.failExhaustAllRetries);
 
                break;
@@ -122,16 +112,9 @@ public class NflScheduleAlgForAndBack extends NflScheduleAlg {
                   reschedAttemptsSameWeek = 0;
 
                   remWeeksToSchedule = bWeekScheduled - fWeekScheduled - 1;
-/*
-                  scheduler.writeReschedLogFile("   Fail-exhaust same week: " + weekNum + ", both dirs, multi-week retry: " + numWeeksBack + ", sDir: " + sDir + ", fweeks: " + fWeekScheduled +
-                                                ", bweeks: " + bWeekScheduled + ", remWeeks: " + remWeeksToSchedule +
-                                                ", fWeekSucc: " + fWeekSuccess + ", bWeekSucc: " + bWeekSuccess +
-                                                ", us games/byes: " + schedule.unscheduledGames.size() + "/" + schedule.unscheduledByes.size() +
-                                                ", us Tms: " + unscheduledTeams.size() + "\n");
-*/
+
                   logWeeklyDataWeekScheduleAttempt(schedule, NflWeeklyData.weekScheduleResultType.failMultiWeeksBack);
 
-                  unscheduledTeams.clear();
                   sDir *= -1;  // reverse the scheduling direction
                   bWeekSuccess = true;
                   fWeekSuccess = true;
@@ -144,16 +127,9 @@ public class NflScheduleAlgForAndBack extends NflScheduleAlg {
                   boolean shouldClearHistory = true;
                   unscheduleUnrestrictedWeek(schedule, weekNum, shouldClearHistory);
                   updateDemotionInfo(schedule, weekNum); 
-/*
-                  scheduler.writeReschedLogFile("   Fail-exhaust same week: " + weekNum + ", in 1 dir, retry other way: " + ", sDir: " + sDir + ", fweeks: " + fWeekScheduled +
-                                                ", bweeks: " + bWeekScheduled + ", remWeeks: " + remWeeksToSchedule +
-                                                ", fWeekSucc: " + fWeekSuccess + ", bWeekSucc: " + bWeekSuccess +
-                                                ", us games/byes: " + schedule.unscheduledGames.size() + "/" + schedule.unscheduledByes.size() +
-                                                ", us Tms: " + unscheduledTeams.size() + "\n");
-*/
+
                   logWeeklyDataWeekScheduleAttempt(schedule, NflWeeklyData.weekScheduleResultType.failChangeDir);
 
-                  unscheduledTeams.clear();
                   reschedAttemptsSameWeek=0;
 
                   sDir *= -1;  // reverse the scheduling direction   
@@ -164,17 +140,9 @@ public class NflScheduleAlgForAndBack extends NflScheduleAlg {
                boolean shouldClearHistory = true;
                unscheduleUnrestrictedWeek(schedule, weekNum, shouldClearHistory);
                updateDemotionInfo(schedule, weekNum); 
-/*
-               scheduler.writeReschedLogFile("   Fail-under same week limit: " + weekNum + ", retry same week: "
-                     + ", sDir: " + sDir + ", fweeks: " + fWeekScheduled + ", bweeks: " + bWeekScheduled
-                     + ", remWeeks: " + remWeeksToSchedule + ", fWeekSucc: " + fWeekSuccess + ", bWeekSucc: "
-                     + bWeekSuccess + ", us games/byes: " + schedule.unscheduledGames.size() + "/"
-                     + schedule.unscheduledByes.size() + ", us Teams: " + unscheduledTeams.size() + "\n"); 
-*/
 
                logWeeklyDataWeekScheduleAttempt(schedule, NflWeeklyData.weekScheduleResultType.failRepeatSameWeek);
                            
-               unscheduledTeams.clear();
                reschedAttemptsSameWeek++;
             }
          }
@@ -219,9 +187,9 @@ public class NflScheduleAlgForAndBack extends NflScheduleAlg {
          if (weekScheduleResult == NflWeeklyData.weekScheduleResultType.failMultiWeeksBack) {
             weeklyData.numWeeksBack = numWeeksBack;
          }
-         weeklyData.scheduledByes = byesToScheduleThisWeek;
+         weeklyData.scheduledByes = byesScheduledThisWeek;
          weeklyData.scheduledGames = NflDefs.numberOfTeams / 2 - unscheduledTeams.size() / 2
-               - byesToScheduleThisWeek / 2;
+               - byesScheduledThisWeek / 2;
          weeklyData.unscheduledByes = schedule.unscheduledByes.size();
          weeklyData.unscheduledGames = schedule.unscheduledGames.size();
          weeklyData.unscheduledTeams = unscheduledTeams.size();

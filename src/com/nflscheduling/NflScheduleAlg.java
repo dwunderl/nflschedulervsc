@@ -13,7 +13,14 @@ public class NflScheduleAlg {
     // Holds arrays of allGames, unscheduledGames, unscheduledByes
 
     // public ArrayList<String> reschedLog;
-
+    public int fWeekScheduled = 0;
+    public int bWeekScheduled = NflDefs.numberOfWeeks + 1;
+    public int remWeeksToSchedule = bWeekScheduled - fWeekScheduled - 1;
+    public boolean fWeekSuccess = true;
+    public boolean bWeekSuccess = true;
+    public int numWeeksBack = 0;
+    public int weekNum = 0;
+    
     public int reschedAttemptsSameWeek;       // retries in same week before giving up and going back 1 week
                                               // unschedule the failed week, demote a game and retry the week
     
@@ -85,6 +92,7 @@ public class NflScheduleAlg {
     
     public ArrayList<NflTeamSchedule> unscheduledTeams = new ArrayList<NflTeamSchedule>();
     public int byesToScheduleThisWeek;
+    public int byesScheduledThisWeek;
     public int sDir;
     public NflWeeklyData weeklyData = new NflWeeklyData();
     public NflWeeklyData priorWeeklyData = null;
@@ -167,6 +175,7 @@ public class NflScheduleAlg {
               status = false;
   
               // determine unscheduled teams
+              unscheduledTeams.clear();
               for (final NflTeamSchedule teamSchedule : schedule.teamSchedules) {
                  final NflGameSchedule gameSched = teamSchedule.scheduledGames[weekNum - 1];
                  if (gameSched == null) {
@@ -215,9 +224,8 @@ public class NflScheduleAlg {
         /////////////////
         // Bye Scheduling
         /////////////////
-        if (byesToScheduleThisWeek >= 2 && schedule.unscheduledByes.size() >= 2) {
-           // NflGameSchedule lastByeGame = scheduleNextUnrestrictedByes(schedule,
-           // weekNum);
+        if (byesToScheduleThisWeek - byesScheduledThisWeek >= 2 && schedule.unscheduledByes.size() >= 2) {
+           // NflGameSchedule lastByeGame = scheduleNextUnrestrictedByes(schedule, weekNum);
            final NflGameSchedule lastByeGame = scheduleNextUnrestrictedByes2(schedule, weekNum);
 
            return lastByeGame;
@@ -411,33 +419,31 @@ public class NflScheduleAlg {
    // TBD then work through the sorted list, scheduling an even number of byes -
    // TBD starting with the primary bye then it's unscheduled opponent byes
 
-public NflGameSchedule scheduleNextUnrestrictedByes2(final NflSchedule schedule, final int weekNum) {
-   NflGameSchedule lastScheduledBye = null;
-   final ArrayList<NflGameSchedule> byesToSchedule = new ArrayList<NflGameSchedule>();
+   public NflGameSchedule scheduleNextUnrestrictedByes2(final NflSchedule schedule, final int weekNum) {
+      NflGameSchedule lastScheduledBye = null;
+      final ArrayList<NflGameSchedule> byesToSchedule = new ArrayList<NflGameSchedule>();
+      
+      while (byesToScheduleThisWeek - byesScheduledThisWeek > 0) {
+         scoreUnscheduledByes(schedule.unscheduledByes, weekNum);
+         // Prefer games with multiple unscheduled byes vs 1 or 0
+         Collections.sort(schedule.unscheduledByes, NflGameSchedule.GameScheduleByeComparatorByByeCandidateScore);
 
-   while (byesToScheduleThisWeek > 0) {
-      scoreUnscheduledByes(schedule.unscheduledByes, weekNum);
-      // Prefer games with multiple unscheduled byes vs 1 or 0
-      Collections.sort(schedule.unscheduledByes, NflGameSchedule.GameScheduleByeComparatorByByeCandidateScore);
+         findMaxEvenRelatedUnscheduledByes(schedule.unscheduledByes, byesToSchedule, weekNum);
+         for (final NflGameSchedule byeToSchedule : byesToSchedule) {
+            // System.out.println("Scheduling Bye(2) in week: " + weekNum + " home team: " +
+            // byeToSchedule.homeTeamSchedule.team.teamName);
 
-      findMaxEvenRelatedUnscheduledByes(schedule.unscheduledByes, byesToSchedule, weekNum);
-      for (final NflGameSchedule byeToSchedule: byesToSchedule) {
-         //System.out.println("Scheduling Bye(2) in week: " + weekNum + " home team: " + byeToSchedule.homeTeamSchedule.team.teamName);
-         if (byeToSchedule.score == 0) {
-            //System.out.println("Scheduling score 0 Bye in week: " + weekNum + " home team: " + byeToSchedule.homeTeamSchedule.team.teamName + ", unscheduledByes: " + schedule.unscheduledByes.size() + ", byesToSchedule: " + byesToSchedule.size());
-            //return null;   // the bye is unschedulable - there is a conflicting game in the week
-         }
-         scheduler.placeGameInSchedule(byeToSchedule, weekNum, schedule);
-         byesToScheduleThisWeek--;
-         lastScheduledBye = byeToSchedule;
-         if (byesToScheduleThisWeek <= 0) {
-            break;
+            scheduler.placeGameInSchedule(byeToSchedule, weekNum, schedule);
+            byesScheduledThisWeek++;
+            lastScheduledBye = byeToSchedule;
+            if (byesToScheduleThisWeek - byesScheduledThisWeek <= 0) {
+               break;
+            }
          }
       }
-   }
 
-    return lastScheduledBye;
-  }
+      return lastScheduledBye;
+   }
 
   public boolean scoreUnscheduledByes(final ArrayList<NflGameSchedule> unscheduledByes, final int weekNum) {
     for (final NflGameSchedule unscheduledBye : unscheduledByes) {
@@ -775,6 +781,7 @@ public NflGameSchedule scheduleNextUnrestrictedByes2(final NflSchedule schedule,
    int remainingByesToSchedule = schedule.unscheduledByes.size();
 
    byesToScheduleThisWeek = 0;
+   byesScheduledThisWeek = 0;
 
    if (remainingByesToSchedule == 0) {
       return true;
@@ -784,24 +791,19 @@ public NflGameSchedule scheduleNextUnrestrictedByes2(final NflSchedule schedule,
    int remainingByeMin = 0;
    NflResourceSchedule byeResourceSchedule = schedule.findResource("Bye");
    
-    if (byeResourceSchedule == null) {
-       return true;
-    }
+   if (byeResourceSchedule == null) {
+      return true;
+   }
     
-    // Short circuit (temporary): exactly specified number for this week
-    // TBD: Doesnt account for forced byes in the schedule
-
-    // determine remaining bye capacity based on the specified bye resource max 
-    // reduced by the number of byes already scheduled
-    
-   // int sDir = NflDefs.schedulingDirection;
    int weekEnd = NflDefs.numberOfWeeks;
 
    if (sDir == -1) {
       weekEnd = 1;
+      weekEnd = fWeekScheduled+1;   // TBD forwardAndBackward - must work for single
    }
    else if (sDir == 1) {
       weekEnd = NflDefs.numberOfWeeks;
+      weekEnd = bWeekScheduled-1;  // TBD forwardAndBackward - must work for single
    }
    
    // Accumulated over the remaining unscheduled weeks

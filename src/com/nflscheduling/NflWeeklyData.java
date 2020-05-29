@@ -31,6 +31,7 @@ public class NflWeeklyData {
     public enum weekScheduleResultType {
         success,
         failRepeatSameWeek,
+        failOneWeekBack,
         failMultiWeeksBack,
         failChangeDir,
         failExhaustAllRetries
