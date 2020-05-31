@@ -18,6 +18,8 @@ public class NflScheduleAlg {
     public int remWeeksToSchedule = bWeekScheduled - fWeekScheduled - 1;
     public boolean fWeekSuccess = true;
     public boolean bWeekSuccess = true;
+    public int bWeekLowest = NflDefs.numberOfWeeks+1;
+    public int fWeekHighest = 0;
     public int numWeeksBack = 0;
     public int weekNum = 0;
     
