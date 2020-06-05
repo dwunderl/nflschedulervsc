@@ -63,13 +63,9 @@ public class NflGMetBalancedDivisional extends NflGameMetric {
 
 	       double beforeAwayTeamBalanceMetric = Math.abs((double) awayTeamScheduledDivisionalGames/(double) awayTeamScheduledGames - (1.0/3.0));
 	       double afterAwayTeamBalanceMetric = Math.abs((double) (awayTeamScheduledDivisionalGames+curGameDivisional)/(double) (awayTeamScheduledGames+1) - (1.0/3.0));
-	       
+
 	       score = (afterHomeTeamBalanceMetric - beforeHomeTeamBalanceMetric) + (afterAwayTeamBalanceMetric - beforeAwayTeamBalanceMetric);
-	        
-		   //System.out.println("Info: Balanced Divisional metric for game, weekNum: " + weekNum + " home team: " + homeTeamSched.team.teamName + " away team: " + awayTeamSched.team.teamName
-		   // 		                + ", score: " + score);
-		   //System.out.println("                          beforeHomeTeamBalanceMetric: " + beforeHomeTeamBalanceMetric + ", afterHomeTeamBalanceMetric: " + afterHomeTeamBalanceMetric 
-		   //		                    + ", beforeAwayTeamBalanceMetric: " + beforeAwayTeamBalanceMetric + ", afterAwayTeamBalanceMetric: " + afterAwayTeamBalanceMetric);
+
 		   return true;
 		}
 }

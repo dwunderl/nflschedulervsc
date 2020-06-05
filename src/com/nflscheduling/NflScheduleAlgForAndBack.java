@@ -125,48 +125,4 @@ public class NflScheduleAlgForAndBack extends NflScheduleAlg {
       return status;
    }
 
-   public boolean logWeeklyDataWeekStart(NflSchedule schedule) {
-      if (scheduler.reschedLogOn) {
-         priorWeeklyData = weeklyData;
-         weeklyData = new NflWeeklyData();
-         weeklyData.init(schedule.unscheduledGames.get(1));
-         weeklyData.weekNum = weekNum;
-         weeklyData.schedulingDirection = sDir;
-         if (priorWeeklyData != null) {
-            weeklyData.priorSuccess = priorWeeklyData.success;
-            weeklyData.priorNumWeeksBack = priorWeeklyData.numWeeksBack;
-            weeklyData.priorWeekResult = priorWeeklyData.weekResult;
-         }
-      }
-      return true;
-   }
-
-   public boolean logWeeklyDataWeekScheduleAttempt(NflSchedule schedule,
-                                                   NflWeeklyData.weekScheduleResultType weekScheduleResult) {
-      if (scheduler.reschedLogOn) {
-         if (weekScheduleResult == NflWeeklyData.weekScheduleResultType.success) {
-            weeklyData.success = true;
-         } else {
-            weeklyData.success = false;
-         }
-         weeklyData.weekResult = weekScheduleResult;
-         weeklyData.backwardWeekScheduled = bWeekScheduled;
-         weeklyData.forwardWeekScheduled = fWeekScheduled;
-         weeklyData.numWeeksBack = 0;
-         if (weekScheduleResult == NflWeeklyData.weekScheduleResultType.failMultiWeeksBack) {
-            weeklyData.numWeeksBack = numWeeksBack;
-         }
-         weeklyData.scheduledByes = byesScheduledThisWeek;
-         weeklyData.scheduledGames = NflDefs.numberOfTeams / 2 - unscheduledTeams.size() / 2
-               - byesScheduledThisWeek / 2;
-         weeklyData.unscheduledByes = schedule.unscheduledByes.size();
-         weeklyData.unscheduledGames = schedule.unscheduledGames.size();
-         weeklyData.unscheduledTeams = unscheduledTeams.size();
-
-         weeklyData.alreadyScheduledRejection = alreadyScheduledRejection;
-         weeklyData.backToBackMatchRejection = backToBackMatchRejection;
-         weeklyData.resourceUnavailRejection = resourceUnavailRejection;
-      }
-      return true;
-   }
 }

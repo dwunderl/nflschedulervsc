@@ -12,6 +12,7 @@ public class NflDefs {
 	public static int alertLimit = 4;
 	public static int hardViolationLimit = 0;
 	public static int schedulingDirection = -1;
+	public static boolean reschedLogOn = false;
 	
 	public enum AlgorithmType {Default,
 							   Forward,

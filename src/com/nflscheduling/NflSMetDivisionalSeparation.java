@@ -42,7 +42,7 @@ public class NflSMetDivisionalSeparation extends NflScheduleMetric {
 	    		   alert.homeTeam = teamGame2.game.homeTeam;
 	    		   alert.awayTeam = teamGame2.game.awayTeam;
 	    		   schedule.alerts.add(alert);
-	    		   hardViolation = true;
+	    		   //hardViolation = true;
 	           }
 	        }
          }

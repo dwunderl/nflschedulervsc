@@ -41,10 +41,6 @@ public class NflGMetDivisionalWeekLimits extends NflGameMetric {
          score = 1.0;
       }
       
-      //System.out.println("Info: Last game unschedulable metric for game, weekNum: " + weekNum + " home team: " + gameSchedule.game.homeTeam + " away team: " + gameSchedule.game.awayTeam
-      //                    + ", unScheduledTeamCount: " + unScheduledTeamCount + ", remainingUnscheduledTeams: " + remainingTeam1 + ", " + remainingTeam2 + ", score: " + score);
-	   
-	  return true;
+	   return true;
 	}
-
 }

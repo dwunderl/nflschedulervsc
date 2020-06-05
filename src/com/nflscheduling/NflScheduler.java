@@ -129,7 +129,7 @@ public class NflScheduler {
    public FileWriter schedAttemptsLogFw = null;
    public BufferedWriter reschedLogBw = null;
    public FileWriter reschedLogFw = null;
-   public boolean reschedLogOn = false;
+   public boolean reschedLogOn = true;
 
    public boolean init() {
       loadParams();                                 // load from nflparams.csv: NflDefs.numberOfWeeks, NflDefs.numberOfTeams
@@ -189,11 +189,12 @@ public class NflScheduler {
       openSchedAttemptsLogFile();
       openReschedLogFile();
 
-      for (scheduleAttempts = 1; scheduleAttempts < NflDefs.scheduleAttempts; scheduleAttempts++) {
+      for (scheduleAttempts = 1; scheduleAttempts <= NflDefs.scheduleAttempts; scheduleAttempts++) {
          rnd = new Random();
 
          curSchedule = new NflSchedule();
          curSchedule.init(teams, games, resources);
+         NflWeeklyData.init(curSchedule.allGames.get(0));
          algorithm.curSchedule = curSchedule;
          algorithm.scheduleInit();
 
@@ -213,8 +214,8 @@ public class NflScheduler {
 
          if (curSchedule.unscheduledGames.size() == 0) {
             curSchedule.computeMetrics();
-            algorithm.terminationReason = "Schedule Metric: " + algorithm.curSchedule.score + " Alerts: " + curSchedule.alerts.size()
-                  + " hard violations: " + curSchedule.hardViolationCount + " vios: " + curSchedule.hardViolations;
+            algorithm.terminationReason = "Schedule Metric: " + algorithm.curSchedule.score + " , Alerts: " + curSchedule.alerts.size()
+                  + " , hard violations: " + curSchedule.hardViolationCount + " vios: " + curSchedule.hardViolations;
             if (curSchedule.hardViolationCount <= NflDefs.hardViolationLimit
                   && curSchedule.alerts.size() <= NflDefs.alertLimit) {
                schedules.add(curSchedule);
@@ -284,12 +285,9 @@ public class NflScheduler {
                      System.out.println("loadParams: NumberOfTeams invalid" + NflDefs.numberOfTeams);
                   }
                   System.out.println("loadParams: NumberOfTeams set to " + NflDefs.numberOfTeams);
-               } else if (token[0].equalsIgnoreCase("SchedulingDirection")) {
-                  NflDefs.schedulingDirection = Integer.parseInt(token[1]);
-                  if (NflDefs.schedulingDirection != -1 || NflDefs.schedulingDirection != 1) {
-                     System.out.println("loadParams: SchedulingDirection invalid" + NflDefs.schedulingDirection);
-                  }
-                  System.out.println("loadParams: SchedulingDirection set to " + NflDefs.schedulingDirection);
+               } else if (token[0].equalsIgnoreCase("ReschedLogOn")) {
+                  NflDefs.reschedLogOn = Boolean.parseBoolean(token[1]);
+                  System.out.println("loadParams: ReschedLogOn set to " + NflDefs.reschedLogOn);
                } else if (token[0].equalsIgnoreCase("AlgorithmType")) {
                   NflDefs.algorithmType = AlgorithmType.valueOf(token[1]);
                   System.out.println("loadParams: Algorithm set to " + NflDefs.algorithmType.toString());
@@ -1445,10 +1443,6 @@ public class NflScheduler {
       try {
          partialScheduleLogFw = new FileWriter("logPartialScheduleResults" + scheduleAttempts + ".csv");
          partialScheduleLogBw = new BufferedWriter(partialScheduleLogFw);
-
-         // write the header to the file
-         // partialScheduleLogBw.write("FingerPrint,Week,Iteration,Unscheduled,BaseFP,Count
-         // \n");
          partialScheduleLogBw.write("FingerPrint,Week,Iteration,Unscheduled,BaseFP,PSE Count,GamesInWeek,HighSeqNum,Unsched Games,Unsched Byes \n");
       } catch (FileNotFoundException e) {
          e.printStackTrace();

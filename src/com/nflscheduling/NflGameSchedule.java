@@ -100,7 +100,8 @@ public class NflGameSchedule {
 	   return false;
    }
 
-   public boolean computeMetrics(int weekNum, NflSchedule schedule, ArrayList<NflGameSchedule> candidateGames) {
+   public boolean computeMetrics(int weekNum, NflSchedule schedule, ArrayList<NflGameSchedule> candidateGames,
+                                 NflScheduleAlg alg) {
       score = 0.0;
       hardViolationCount = 0;
 
@@ -110,6 +111,7 @@ public class NflGameSchedule {
          score += gameMetric.score * gameMetric.weight;
          if (gameMetric.hardViolation) {
             hardViolationCount++;
+            alg.logWeeklyDataHardViolation(gameMetric);
          }
       }
 
@@ -155,22 +157,6 @@ public class NflGameSchedule {
       return requestedMetric;
    }
    
-   
-   
-   /*Comparator for sorting the list by score */
-   public static Comparator<NflGameSchedule> GameScheduleComparatorByHomeTeam = new Comparator<NflGameSchedule>() {
-
-      public int compare(NflGameSchedule gs1, NflGameSchedule gs2) {
-          String homeTeam1Name = gs1.homeTeamSchedule.team.teamName;
-          String homeTeam2Name = gs2.homeTeamSchedule.team.teamName;
-       
-	     //ascending order
-	     int returnStatus = homeTeam1Name.compareTo(homeTeam2Name);
-
-	     return returnStatus;
-       }
-    };
-   
    /*Comparator for sorting the list by score */
    public static Comparator<NflGameSchedule> GameScheduleComparatorByScore = new Comparator<NflGameSchedule>() {
 
@@ -181,14 +167,12 @@ public class NflGameSchedule {
          Integer gs1HardViolationCount = gs1.hardViolationCount;
          Integer gs2HardViolationCount = gs2.hardViolationCount;
 
-   	    //ascending order by hard violation count - prefer less hard violation counts
-        int returnStatus = gs1HardViolationCount.compareTo(gs2HardViolationCount);
+   	   //ascending order by hard violation count - prefer less hard violation counts
+         int returnStatus = gs1HardViolationCount.compareTo(gs2HardViolationCount);
 
          if (returnStatus == 0) {
             //ascending order, prefer lower score (penalty)
 	        returnStatus = gs1Score.compareTo(gs2Score);
-	        //System.out.println("Sort Compare status : " + returnStatus + " for game1: " + gs1.game.homeTeam + " : " + gs1.game.awayTeam + ", score: " + gs1.score
-            //	                                                      + ", vs game2: " + gs2.game.homeTeam + " : " + gs2.game.awayTeam + ", score: " + gs2.score);
          }
 
 	     return returnStatus;

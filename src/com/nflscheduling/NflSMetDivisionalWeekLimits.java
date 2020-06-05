@@ -24,7 +24,7 @@ public class NflSMetDivisionalWeekLimits extends NflScheduleMetric {
 	      if (divisionalGameCount > 11) {
 	         score = 2.0;
 	         limitViolated = " > 11";
-	         hardViolation = true;
+	         //hardViolation = true;
 	      }
 	      else if (divisionalGameCount > 8) {
 	         score = 1.0;
@@ -33,16 +33,12 @@ public class NflSMetDivisionalWeekLimits extends NflScheduleMetric {
 	      else if (divisionalGameCount < 2) {
 	    	  score = 1.0;
 		      limitViolated = " < 2";
-		      hardViolation = true;
+		      //hardViolation = true;
 	      }
 	      
 	      if (!limitViolated.isEmpty()) {
 	         NflScheduleAlert alert = new NflScheduleAlert();
-	         //alert.alertDescr = metricName;
-	         //alert.weekNum = wi;
-	         //alert.homeTeam = limitViolated;
-	         //alert.awayTeam = Integer.toString(divisionalGameCount);
-	         //schedule.alerts.add(alert);
+
 			 alert.alertDescr = "Divisional Week Limit: " + limitViolated + " in Week: " + wi + " divisional game count: " + divisionalGameCount;
 			 schedule.addAlert(alert);
 	      }

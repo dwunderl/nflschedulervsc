@@ -18,15 +18,19 @@ public class NflWeeklyData {
     public int alreadyScheduledRejection = 0;
     public int backToBackMatchRejection = 0;
     public int resourceUnavailRejection = 0;
+    public int hardViolationRejection = 0;
     public int numWeeksBack = 0;
 
     public boolean priorSuccess;
     public weekScheduleResultType priorWeekResult;
     public int priorNumWeeksBack;
-    public LinkedHashMap<String,Float> gameMetrics;
     public int hardViolationCount = 0;
     public double score = 0.0f;
     public int demotionPenalty = 0;
+    public static LinkedHashMap<String,Float> gameMetrics;
+    public boolean homeStandHardViolation = false;
+    public boolean roadTripHardViolation = false;
+    public boolean repeatedMatchUpHardViolation = false;
 
     public enum weekScheduleResultType {
         success,
@@ -37,7 +41,7 @@ public class NflWeeklyData {
         failExhaustAllRetries
     }
 
-    public boolean init(NflGameSchedule gameSchedule) {
+    public static boolean init(NflGameSchedule gameSchedule) {
         gameMetrics = new LinkedHashMap<String,Float>();
         for (int mi = 0; mi < gameSchedule.metrics.size(); mi++) {
             NflGameMetric gameMetric = gameSchedule.metrics.get(mi);
