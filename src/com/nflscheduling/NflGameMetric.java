@@ -1,7 +1,7 @@
 package com.nflscheduling;
 import java.util.*;
 
-public class NflGameMetric {
+public class NflGameMetric implements Cloneable {
 
    // ---
    // Instance data
@@ -31,5 +31,12 @@ public class NflGameMetric {
    // use @Override when inheriting from nflGameMetric for this function
    public boolean isScheduleMetric() {
       return isScheduleMetric;
+   }
+
+   public Object clone() throws CloneNotSupportedException {
+      // Assign the shallow copy to new reference variable t
+      NflGameMetric gm = (NflGameMetric) super.clone();
+
+      return gm;
    }
 }

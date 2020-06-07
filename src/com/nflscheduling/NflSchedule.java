@@ -31,14 +31,13 @@ public class NflSchedule {
    //    allGames
    
    NflSchedule() {
-      //System.out.println("Creating an nflSchedule");
    }
 
    public boolean init(ArrayList<NflTeam> teams, 
 		               ArrayList<NflGame> games,
-		               ArrayList<NflResource> resources) {
-	   
-	   
+                     ArrayList<NflResource> resources,
+                     LinkedHashMap<String,NflScheduleMetric> sMetricsToUse,
+                     LinkedHashMap<String,NflGameMetric> gMetricsToUse) throws CloneNotSupportedException{
 	   teamSchedules = new ArrayList<NflTeamSchedule>();
       allGames = new ArrayList<NflGameSchedule>();
       unscheduledGames = new ArrayList<NflGameSchedule>();
@@ -48,27 +47,10 @@ public class NflSchedule {
       alerts = new ArrayList<NflScheduleAlert>();
       enableAlerts = false;
 
-      NflSMetNoRepeatedMatchup metricNRM = new NflSMetNoRepeatedMatchup("NoRepeatedMatchup");
-      scheduleMetrics.add(metricNRM);
-      NflSMetRoadTripLimit metricRTL = new NflSMetRoadTripLimit("RoadTripLimit");
-      scheduleMetrics.add(metricRTL);
-      NflSMetHomeStandLimit metricHSL = new NflSMetHomeStandLimit("HomeStandLimit");
-      scheduleMetrics.add(metricHSL);
-      NflSMetDivisionalSeparation metricDS = new NflSMetDivisionalSeparation("DivisionalSeparation");
-      scheduleMetrics.add(metricDS);
-      NflSMetDivisionalWeekLimits metricDWL = new NflSMetDivisionalWeekLimits("DivisionalWeekLimits");
-      scheduleMetrics.add(metricDWL);
-      NflSMetDivisionalStart metricDivStart = new NflSMetDivisionalStart("DivisionalStart");
-      scheduleMetrics.add(metricDivStart);
-      NflSMetDivisionalBalance metricDivBal = new NflSMetDivisionalBalance("DivisionalBalance");
-      scheduleMetrics.add(metricDivBal);
-      
-      //NflSMetBalancedHomeAway metricBalHA = new NflSMetBalancedHomeAway("Balanced Home Away", this);
-      //scheduleMetrics.add(metricBalHA);
-
 	  createTeamSchedules(teams);
-	  createGameSchedules(games);
-	  createResourceSchedules(resources);
+	  createGameSchedules(games,gMetricsToUse);
+     createResourceSchedules(resources);
+     createScheduleMetrics(sMetricsToUse);
 	  populateOpponentByes();
 	  return true;
    }
@@ -84,7 +66,9 @@ public class NflSchedule {
       return true;
    }
    
-   public boolean createGameSchedules(ArrayList<NflGame> baseGames) {
+   public boolean createGameSchedules(ArrayList<NflGame> baseGames, 
+                                      LinkedHashMap<String,NflGameMetric> gameMetrics) 
+                                                             throws CloneNotSupportedException {
       for (int gi=0; gi < baseGames.size(); gi++) {
          NflGame game = baseGames.get(gi);
 			     
@@ -94,7 +78,7 @@ public class NflSchedule {
             unscheduledByes.add(gameSchedule);
          }
          else {
-            gameSchedule.initGame();
+            gameSchedule.initGame(gameMetrics);
             unscheduledGames.add(gameSchedule);
             allGames.add(gameSchedule);
          }
@@ -150,22 +134,10 @@ public class NflSchedule {
     		  }
     	  }
 
-    	   // Add awayteam bye to hometeam bye opponentByes
-    	   // Add hometeam bye to awwayteam bye opponentByes
      	  homeTeamBye.opponentByes.add(awayTeamBye);
      	  awayTeamBye.opponentByes.add(homeTeamBye);
        }
               
-      // debug dump of the fully populate byes with their opponent byes
-       /*
- 	  for (NflGameSchedule byeGame: this.unscheduledByes) {
- 	      System.out.println("Bye for team: " + byeGame.homeTeamSchedule.team.teamName + ", weekNum: " + byeGame.weekNum + ", opponentBye length: " + byeGame.opponentByes.size());
- 	 	  for (NflGameSchedule opponentByeGame: byeGame.opponentByes) {
- 	 	      System.out.println("   Opponent Bye for team: " + opponentByeGame.homeTeamSchedule.team.teamName + ", weekNum: " + opponentByeGame.weekNum + ", opponentBye length: " + opponentByeGame.opponentByes.size());
- 		  }
-	  }
-	  */
-
 	   return true;
    }
 
@@ -337,4 +309,12 @@ public class NflSchedule {
 	   return true;
    }
 
+   public boolean createScheduleMetrics(LinkedHashMap<String, NflScheduleMetric> sMetricsToUse) throws CloneNotSupportedException {
+      for (Map.Entry<String, NflScheduleMetric> scheduleMetricEntry : sMetricsToUse.entrySet()) {
+         NflScheduleMetric scheduleMetric = scheduleMetricEntry.getValue();
+         NflScheduleMetric newScheduleMetric = (NflScheduleMetric) scheduleMetric.clone();
+         scheduleMetrics.add(newScheduleMetric);
+      }
+      return true;
+   }
 }

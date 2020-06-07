@@ -2,7 +2,7 @@ package com.nflscheduling;
 
 import java.util.ArrayList;
 
-public class NflScheduleMetric {
+public class NflScheduleMetric implements Cloneable {
 
    public String metricName;
    public double weight;
@@ -47,5 +47,12 @@ public class NflScheduleMetric {
       }
 
       return true;
+   }
+
+   public Object clone() throws CloneNotSupportedException {
+      // Assign the shallow copy to new reference variable t
+      NflScheduleMetric sm = (NflScheduleMetric) super.clone();
+
+      return sm;
    }
 }

@@ -11,8 +11,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 
-//import java.io.IOException;
-
 public class NflScheduler {
 
    // Algorithm Top Level is in the static main function
@@ -39,7 +37,10 @@ public class NflScheduler {
    
    public ArrayList<NflTeam> teams;    // base class instances of teams - to be turned into NflTeamSchedule instances
                                        // loaded from nflteams.csv within function loadTeams()
-   
+
+   public LinkedHashMap<String,NflGameMetric> gameMetrics = new LinkedHashMap<String,NflGameMetric>();
+   public LinkedHashMap<String,NflScheduleMetric> scheduleMetrics = new LinkedHashMap<String,NflScheduleMetric>();
+
    public int reschedWeekNum = 0;      // TBD: Not set or used, except as a logging output (in this file)
                                        // could be removed
       
@@ -141,6 +142,7 @@ public class NflScheduler {
       loadTeams(teams); // base teams created globally in NflScheduler
       loadGames(games); // base games created globally in NflScheduler
       loadResources();
+      loadMetrics();
 
       if (NflDefs.algorithmType == AlgorithmType.Forward) {
          algorithm = new NflScheduleAlgForOrBack();
@@ -181,7 +183,7 @@ public class NflScheduler {
       return true;
    }
 
-   public boolean generateSchedules() {
+   public boolean generateSchedules() throws CloneNotSupportedException {
       // ---------- Schedule Initialization --------------------
       // create next curSchedule
       // initialize unscheduledGames of the curSchedule from all the modeled games
@@ -193,7 +195,7 @@ public class NflScheduler {
          rnd = new Random();
 
          curSchedule = new NflSchedule();
-         curSchedule.init(teams, games, resources);
+         curSchedule.init(teams, games, resources, scheduleMetrics,gameMetrics);
          NflWeeklyData.init(curSchedule.allGames.get(0));
          algorithm.curSchedule = curSchedule;
          algorithm.scheduleInit();
@@ -240,8 +242,7 @@ public class NflScheduler {
       return true;
    }
 
-   public static void main(String[] args) {
-      // Prints "Hello, World" in the terminal window.
+   public static void main(String[] args) throws CloneNotSupportedException {
       System.out.println("Hello, World");
 
       // ---------- Scheduler Initialization ------------------
@@ -1462,6 +1463,119 @@ public class NflScheduler {
          }
       }
 
+      return true;
+   }
+
+   public boolean loadMetrics() {
+      String csvFile = "nflmetrics.csv";
+      BufferedReader br = null;
+      String line = "";
+      String cvsSplitBy = ",";
+
+      try {
+         br = new BufferedReader(new FileReader(csvFile));
+         while ((line = br.readLine()) != null) {
+            // use comma as separator
+            String[] token = line.split(cvsSplitBy);
+            ///////////////////////////
+            // token[0] metric type
+            // token[1] metric name
+            // tokem[2] metric weight
+            // create an instance of the metric, add weight, add to map
+            // then NflGameSchedule can find the metrics to use there, and weight
+            // also NflSchedule can find the schedule metrics to use there + weight
+
+            NflGameMetric gameMetric = null;
+            NflScheduleMetric scheduleMetric = null;
+
+            if (token[0].equalsIgnoreCase("GameMetric")) {
+               if (token[1].equalsIgnoreCase("HomeStandLimit")) {
+                  gameMetric = new NflGMetHomeStandLimit("HomeStandLimit",null);
+               }
+               else if (token[1].equalsIgnoreCase("RoadTripLimit")) {
+                  gameMetric = new NflGMetRoadTripLimit("RoadTripLimit",null);
+               }
+               else if (token[1].equalsIgnoreCase("NoRepeatedMatchup")) {
+                  gameMetric = new NflGMetNoRepeatedMatchup("NoRepeatedMatchup",null);
+               }
+               else if (token[1].equalsIgnoreCase("ConflictsInWeek")) {
+                  gameMetric = new NflGMetConflictsInWeek("ConflictsInWeek",null);
+               }
+               else if (token[1].equalsIgnoreCase("LastGameUnschedulable")) {
+                  gameMetric = new NflGMetLastGameUnschedulable("LastGameUnschedulable",null);
+               }
+               else if (token[1].equalsIgnoreCase("BalancedHomeAway")) {
+                  gameMetric = new NflGMetBalancedHomeAway("BalancedHomeAway",null);
+               }
+               else if (token[1].equalsIgnoreCase("StadiumResource")) {
+                  gameMetric = new NflGMetStadiumResource("StadiumResource",null);
+               }
+               else if (token[1].equalsIgnoreCase("DivisionalWeekLimits")) {
+                  gameMetric = new NflGMetDivisionalWeekLimits("DivisionalWeekLimits",null);
+               }
+               else if (token[2].equalsIgnoreCase("DivisionalSeparation")) {
+                  gameMetric = new NflGMetDivisionalSeparation("DivisionalSeparation",null);
+               }
+               else if (token[2].equalsIgnoreCase("BalancedDivisional")) {
+                  gameMetric = new NflGMetBalancedDivisional("BalancedDivisional",null);
+               }
+               else if (token[1].equalsIgnoreCase("RemainingOpportunities")) {
+                  gameMetric = new NflGMetRemainingOpportunities("RemainingOpportunities",null);
+               }
+               else {
+                  System.out.println("Unrecognized game Metric: " + token[1]);
+                  continue;
+               }
+               gameMetrics.put(gameMetric.metricName, gameMetric);
+               gameMetric.weight = Double.parseDouble(token[2]);
+            }
+            else if (token[0].equalsIgnoreCase("ScheduleMetric")) {
+               if (token[1].equalsIgnoreCase("NoRepeatedMatchup")) {
+                  scheduleMetric = new NflSMetNoRepeatedMatchup("NoRepeatedMatchup");
+               }
+               else if (token[1].equalsIgnoreCase("RoadTripLimit")) {
+                  scheduleMetric = new NflSMetRoadTripLimit("RoadTripLimit");
+               }
+               else if (token[1].equalsIgnoreCase("HomeStandLimit")) {
+                  scheduleMetric = new NflSMetHomeStandLimit("HomeStandLimit");
+               }
+               else if (token[1].equalsIgnoreCase("DivisionalSeparation")) {
+                  scheduleMetric = new NflSMetDivisionalSeparation("DivisionalSeparation");
+               }
+               else if (token[1].equalsIgnoreCase("DivisionalWeekLimits")) {
+                  scheduleMetric = new NflSMetDivisionalWeekLimits("DivisionalWeekLimits");
+               }
+               else if (token[1].equalsIgnoreCase("DivisionalStart")) {
+                  scheduleMetric = new NflSMetDivisionalStart("DivisionalStart");
+               }
+               else if (token[1].equalsIgnoreCase("DivisionalBalance")) {
+                  scheduleMetric = new NflSMetDivisionalBalance("DivisionalBalance");
+               }
+               else {
+                  System.out.println("Unrecognized schedule Metric: " + token[1]);
+                  continue;
+               }
+               scheduleMetrics.put(scheduleMetric.metricName, scheduleMetric);
+               scheduleMetric.weight = Double.parseDouble(token[2]);
+            }
+         }
+      } catch (FileNotFoundException e) {
+         e.printStackTrace();
+      } catch (IOException e) {
+         e.printStackTrace();
+      } finally {
+         if (br != null) {
+            try {
+               br.close();
+            } catch (IOException e) {
+               e.printStackTrace();
+            }
+         }
+      }
+
+      System.out.println("Number of game metrics is " + gameMetrics.size());
+      System.out.println("Number of schedule metrics is " + scheduleMetrics.size());
+      
       return true;
    }
 }

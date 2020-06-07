@@ -16,27 +16,21 @@ public class NflGMetRoadTripLimit extends NflGameMetric {
        // a severe penalty for a road trip of 4 games or longer
        // look left and right from weekNum
 		   
-	   score = 0.0;
+	    score = 0.0;
 	   
        NflTeamSchedule homeTeamSched = gameSchedule.homeTeamSchedule;
        NflTeamSchedule awayTeamSched = gameSchedule.awayTeamSchedule;
-       
-       // NflTeamSchedule homeTeamSched = schedule.findTeam(gameSchedule.game.homeTeam);
-       // NflTeamSchedule awayTeamSched = schedule.findTeam(gameSchedule.game.awayTeam);
-       
+              
        // TBD
        // Modularize the road trip checking to a passed NflTeamSchedule
        // Because if international, then want to treat the home team as having an away game
        // Therefore, check both home and away team for road trip violations
        
-       scoreRoadTripLength(weekNum, awayTeamSched);
+      scoreRoadTripLength(weekNum, awayTeamSched);
        
-       if (gameSchedule.game.isInternational) {
-          scoreRoadTripLength(weekNum, homeTeamSched);  // this game is a virtual away game for the home team
-       }
-
-	   //System.out.println("Info: RoadTripLength metric for game, weekNum: " + weekNum + " home team: " + homeTeamSched.team.teamName + " away team: " + awayTeamSched.team.teamName
-	   //		               + ", roadTripLength: " + roadTripLength + ", score: " + score);
+      if (gameSchedule.game.isInternational) {
+         scoreRoadTripLength(weekNum, homeTeamSched);  // this game is a virtual away game for the home team
+      }
 	   
 	   return true;
 	}
@@ -53,11 +47,12 @@ public class NflGMetRoadTripLimit extends NflGameMetric {
        firstRoadWeek = weekNum;
        for (int wi=weekNum-1; wi >= 1; wi--) {
           if (awayTeamSched.scheduledGames[wi-1] == null) {
+            // No game scheduled (yet) for the previous week
              break;
           }
           
           if (awayTeamSched.scheduledGames[wi-1].isBye) {
-             continue;
+             continue;  // skip over a bye week
           }
           
           NflTeamSchedule prevWeekHomeTeamSched = awayTeamSched.scheduledGames[wi-1].homeTeamSchedule;
@@ -65,6 +60,7 @@ public class NflGMetRoadTripLimit extends NflGameMetric {
           
           if (prevWeekHomeTeamSched == awayTeamSched && !prevWeekGame.isInternational) {
              // last weeks game was a home game that was not an international (virtual away) game
+             // so, treat a previous week international home game as an away game
              break;
           }
           
@@ -78,19 +74,20 @@ public class NflGMetRoadTripLimit extends NflGameMetric {
        lastRoadWeek = weekNum;
        for (int wi = weekNum + 1; wi <= NflDefs.numberOfWeeks; wi++) {
           if (awayTeamSched.scheduledGames[wi - 1] == null) {
-             break;
+            // No game scheduled (yet) for the next week
+            break;
           }
 
           if (awayTeamSched.scheduledGames[wi - 1].isBye) {
-             continue;
+             continue;  // skip over a bye week
           }
 
           NflTeamSchedule nextWeekHomeTeamSched = awayTeamSched.scheduledGames[wi - 1].homeTeamSchedule;
           NflGame nextWeekGame = awayTeamSched.scheduledGames[wi - 1].game;
 
           if (nextWeekHomeTeamSched == awayTeamSched && !nextWeekGame.isInternational) {
-             // next weeks game is a home game that is not an international (virtual away)
-             // game
+             // next weeks game is a home game that is not an international (virtual away) game
+             // so, treat a next week international home game as an away game
              break;
           }
 
@@ -108,7 +105,7 @@ public class NflGMetRoadTripLimit extends NflGameMetric {
     	      hardViolation = true;
          }
          else if (lastRoadWeek == NflDefs.numberOfWeeks) {
-            score += 6.0;
+            score = 4.0;
     	      alertViolation = true;
     	      hardViolation = true;
          }

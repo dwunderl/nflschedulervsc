@@ -926,13 +926,16 @@ public boolean logWeeklyDataWeekStart(NflSchedule schedule) {
    if (scheduler.reschedLogOn) {
       priorWeeklyData = weeklyData;
       weeklyData = new NflWeeklyData();
-      //weeklyData.init(schedule.unscheduledGames.get(1));
       weeklyData.weekNum = weekNum;
       weeklyData.schedulingDirection = sDir;
       if (priorWeeklyData != null) {
          weeklyData.priorSuccess = priorWeeklyData.success;
          weeklyData.priorNumWeeksBack = priorWeeklyData.numWeeksBack;
          weeklyData.priorWeekResult = priorWeeklyData.weekResult;
+      }
+
+      for (Map.Entry<String,Float> gameMetric : NflWeeklyData.gameMetrics.entrySet()) {
+         NflWeeklyData.gameMetrics.replace(gameMetric.getKey(), 0.0f);
       }
    }
    return true;

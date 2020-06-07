@@ -31,29 +31,21 @@ public class NflGMetHomeStandLimit extends NflGameMetric {
        int lastHomeWeek;
 		   
        NflTeamSchedule homeTeamSched = gameSchedule.homeTeamSchedule;
-       //NflTeamSchedule awayTeamSched = gameSchedule.awayTeamSchedule;
-       
-       if (gameSchedule.schedule.enableAlerts) {
-  	      //System.out.println("HSL team: " + homeTeamSched.team.teamName + ", week: " + weekNum);
-        }
   
 	   // look left to earlier weeks
 	   firstHomeWeek = weekNum;
 	   for (int wi=weekNum-1; wi >= 1; wi--) {
 	      if (homeTeamSched.scheduledGames[wi-1] == null) {
+		     // No game scheduled (yet) for the previous week
 	         break;
 	      }
 	          
 	      if (homeTeamSched.scheduledGames[wi-1].isBye) {
-	         continue;
-	      }
-	          
+	         continue;  // skip over a bye week
+		  }
+		  
+		  NflGame prevWeekGame = homeTeamSched.scheduledGames[wi-1].game;
           NflTeamSchedule prevWeekAwayTeamSched = homeTeamSched.scheduledGames[wi-1].awayTeamSchedule;
-          NflGame prevWeekGame = homeTeamSched.scheduledGames[wi-1].game;
-
-          if (gameSchedule.schedule.enableAlerts) {
-      	     //System.out.println("   prevWeekAway team: " + prevWeekAwayTeamSched.team.teamName + ", week: " + wi + ", isInt: " + prevWeekGame.isInternational);
-          }
 
 		  if (prevWeekAwayTeamSched == homeTeamSched || prevWeekGame.isInternational) {
 	         // last weeks game was an away game or an international (virtual away) game
@@ -64,29 +56,23 @@ public class NflGMetHomeStandLimit extends NflGameMetric {
 
 	      homeStandLength++;
 	      firstHomeWeek = wi;
-          if (gameSchedule.schedule.enableAlerts) {
-       	     //System.out.println("   homeStandLength: " + homeStandLength + ", firstHomeWeek: " + firstHomeWeek);
-           }
 	   }
 
 	   // look right to later scheduled weeks
 	   lastHomeWeek = weekNum;
 	   for (int wi=weekNum+1; wi <= NflDefs.numberOfWeeks; wi++) {
 	      if (homeTeamSched.scheduledGames[wi-1] == null) {
+			// No game scheduled (yet) for the next week
 	         break;
 	      }
 	           
 		  if (homeTeamSched.scheduledGames[wi-1].isBye) {
-		     continue;
+		     continue; // skip over a bye week
 	      }
 		       
           NflTeamSchedule nextWeekAwayTeamSched = homeTeamSched.scheduledGames[wi-1].awayTeamSchedule;
           NflGame nextWeekGame = homeTeamSched.scheduledGames[wi-1].game;
           
-          if (gameSchedule.schedule.enableAlerts) {
-       	     //System.out.println("   nextWeekAway team: " + nextWeekAwayTeamSched.team.teamName + ", week: " + wi + ", isInt: " + nextWeekGame.isInternational);
-           }
-
 	      if (nextWeekAwayTeamSched == homeTeamSched || nextWeekGame.isInternational) {
 		     // next weeks game is an away game or an international (virtual away) game
 	         break;
@@ -96,44 +82,29 @@ public class NflGMetHomeStandLimit extends NflGameMetric {
 
 	      homeStandLength++;
 	      lastHomeWeek = wi;
-          if (gameSchedule.schedule.enableAlerts) {
-        	     //System.out.println("   homeStandLength: " + homeStandLength + ", lastHomeWeek: " + lastHomeWeek);
-            }
-
 	   }
 	   
 	   boolean alertViolation = false;
 	   
-	   //if (homeStandLength == 2) {
-		  // score = 1.0;
-		  //  score = 2.0;
-	   // }
 	   if (homeStandLength == 3) {
-	      //System.out.println("homeStandLength == 3; lastHomeWeek: " + lastHomeWeek + ", firstHomeWeek: " + firstHomeWeek);
           score = 3.0;
 	      if (firstHomeWeek == 1) {
-	          //System.out.println("... found firstHomeWeek == 1");
-		      // score = 1.0;
 		      score = 4.0;
 		      alertViolation = true;
 		      hardViolation = true;
 	      }
 	      else if (lastHomeWeek == NflDefs.numberOfWeeks) {
-	         // System.out.println("... found lastHomeWeek == " + NflDefs.numberOfWeeks);
-		     // score = 1.0;
 		     score = 4.0;
 		     alertViolation = true;
 		     hardViolation = true;
 	      }
 	   }
-	   else if (homeStandLength > 4) {
-		  // score = 1.0;
+	   else if (homeStandLength >= 4) {
 		  score = 6.0;
 	      alertViolation = true;
 	      hardViolation = true;
 	   }
 
-	     
        if (alertViolation) {
 	       if (gameSchedule.schedule.enableAlerts) {
 			    NflScheduleAlert alert = new NflScheduleAlert();
@@ -141,9 +112,6 @@ public class NflGMetHomeStandLimit extends NflGameMetric {
 			    gameSchedule.schedule.addAlert(alert);
 	       }
        }
-
-       //System.out.println("Info: homeStandLength metric for game, weekNum: " + weekNum + " home team: " + homeTeamSched.team.teamName + " away team: " + awayTeamSched.team.teamName
-	   //		               + ", homeStandLength: " + homeStandLength + ", score: " + score);
 		   
       return true;
    }

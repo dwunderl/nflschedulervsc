@@ -30,7 +30,6 @@ public class NflGameSchedule {
    public int candidateCount;
 
    NflGameSchedule(NflGame theGame, NflSchedule theSchedule) {
-      //System.out.println("Creating an nflGameMetric");
       game = theGame;
       weekNum = 0;
       restrictedGame = false;
@@ -42,38 +41,21 @@ public class NflGameSchedule {
       isBye = theGame.isBye;
    }
    
-   public boolean initGame() {
+   public boolean initGame(LinkedHashMap<String,NflGameMetric> gMetricsToUse) 
+                                                throws CloneNotSupportedException{
       homeTeamSchedule = schedule.findTeam(game.homeTeam);
       awayTeamSchedule = schedule.findTeam(game.awayTeam);
       stadium = homeTeamSchedule.team.stadium;
       unscheduledByes = new ArrayList<NflGameSchedule>();
       metrics = new ArrayList<NflGameMetric>();
-	      
-      NflGMetNoRepeatedMatchup metricNRM = new NflGMetNoRepeatedMatchup("NoRepeatedMatchup", this);
-      metrics.add(metricNRM);
-      NflGMetConflictsInWeek metricCIW = new NflGMetConflictsInWeek("ConflictsInWeek", this);
-      metrics.add(metricCIW);
-      NflGMetRoadTripLimit metricRTL = new NflGMetRoadTripLimit("RoadTripLimit", this);
-      metrics.add(metricRTL);
-      NflGMetHomeStandLimit metricHSL = new NflGMetHomeStandLimit("HomeStandLimit", this);
-      metrics.add(metricHSL);
-      NflGMetLastGameUnschedulable metricLGUS = new NflGMetLastGameUnschedulable("LastGameUnschedulable", this);
-      metrics.add(metricLGUS);
-      NflGMetBalancedHomeAway metricBalHA = new NflGMetBalancedHomeAway("BalancedHomeAway", this);
-      metrics.add(metricBalHA);
-      NflGMetStadiumResource metricStdRes = new NflGMetStadiumResource("StadiumResource", this);
-      metrics.add(metricStdRes);
-      NflGMetDivisionalWeekLimits metricDivWkLim = new NflGMetDivisionalWeekLimits("DivisionalWeekLimits", this);
-      metrics.add(metricDivWkLim);
-      NflGMetDivisionalSeparation metricDivSep = new NflGMetDivisionalSeparation("DivisionalSeparation", this);
-      metrics.add(metricDivSep);
-      
-      // scheduling success is severely degraded with this new metric
-      NflGMetBalancedDivisional metricBalDiv = new NflGMetBalancedDivisional("BalancedDivisional", this);
-      metrics.add(metricBalDiv);
 
-      //NflGMetRemainingOpportunities metricRO = new NflGMetRemainingOpportunities("RemainingOpportunities", this);
-      //metrics.add(metricRO);
+      // install metrics into each gameSchedule
+      for (Map.Entry<String,NflGameMetric> gameMetricEntry : gMetricsToUse.entrySet()) {
+         NflGameMetric gameMetric = gameMetricEntry.getValue();
+         NflGameMetric newGameMetric = (NflGameMetric) gameMetric.clone();
+         newGameMetric.gameSchedule = this; 
+         metrics.add(newGameMetric);
+      }
 
       candidateCount = 0;
       
@@ -138,7 +120,6 @@ public class NflGameSchedule {
             score += gameMetric.score;
             break;
          }
-         //System.out.println("Computing Metric: " + gameMetric.metricName + " for game: " + game.homeTeam + " : " + game.awayTeam);
       }
 	      		 
       return true;
