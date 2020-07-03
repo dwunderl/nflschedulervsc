@@ -103,7 +103,7 @@ public class NflScheduleAlgForOrBack extends NflScheduleAlg {
                weekResultType = NflWeeklyData.weekScheduleResultType.failRepeatSameWeek;
             }
             // unschedule for failed week (and backtrack weeks) + reset weekNum + state for the reschedule
-            //unschedule from weekNum to goBackToWeekNum according to sDir
+            // unschedule from weekNum to goBackToWeekNum according to sDir
 
             boolean shouldClearHistory = true;
             for (int wn = weekNum; wn*sDir >= goBackToWeekNum*sDir; wn-=sDir) {

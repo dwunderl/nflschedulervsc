@@ -36,8 +36,6 @@ public class NflGMetConflictsInWeek extends NflGameMetric {
  	      candidateSizeWithoutMe = 1;
  	  }
  	  score = (double) conflictsInWeek/(double) candidateSizeWithoutMe;
-      //System.out.println("Info: Conflicts In Week metric for game, weekNum: " + weekNum + " home team: " + gameSchedule.game.homeTeam + " away team: " + gameSchedule.game.awayTeam
-      //                    + ", conflictsInWeek: " + conflictsInWeek + ", candidateSizeWithoutMe: " + candidateSizeWithoutMe + ", score: " + score);
 	   
 	  return true;
 	}

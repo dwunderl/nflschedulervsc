@@ -11,29 +11,16 @@ public class NflGMetDivisionalSeparation extends NflGameMetric {
 	@Override
     public boolean computeMetric(int weekNum, NflSchedule schedule, ArrayList<NflGameSchedule> candidateGames) {
 
-       // ensure 1st Divisional game with a team is after week 5
-       // if game is a divisional game, and weeknum > 5, incentivize the game if the
-       // second matchup game hasn't been scheduled yet
-       // if game is a divisional game, and weeknum > 5, incentivize the game if the
-       // second matchup game hasn't been scheduled yet
-       // Otherwise a 0 score - no incentive
+      // ensure at least one of a divisional pair is scheduled outside of week 5
 
-       // Ensure there is not a weekNum-1 or weekNum+1 scheduled game that has the same
-       // teams
-       // as the gameSchedule linked to this gameMetric
-       // if no repeated matchups in either direction - then set the score to 0
-       // if a repeated matchup exists in either direction - set the score to 1
-
-       // for each team in my gameSchedule
-       // if weekNum+1 is a valid week (NflDefs.numberOfWeeks)
-       // check weekNum+1 schedule for TeamSchedule(s) homeTeam and then awayTeam
-       // if weekNum+1 has a game scheduled, ensure it's gameSchedule teams are not the
-       // same as mine
-       // if weekNum-1 is a valid week
-       // if weekNum-1 has a game scheduled, ensure it's gameSchedule teams are not the
-       // same as mine
-
-       // check my home teams scheduled game for a repeated matchup
+      // if division game and within week 5 and matchup game already scheduled within week 5
+      //     reject scheduling the matchup within week 5 - hard violation
+      // if division game and within week 5 and matchup game already scheduled outside of week 5
+      //     no problem - ok to schedule here
+      // if division game and within week 5 and matchup game not yet scheduled
+      //     no problem - ok to schedule here
+      // if division game and outside of week 5 and matchup game not yet scheduled
+      //     incentivize to schedule - to ensure at least one game of pair schedules outside of week 5
 
        score = 0.0;
 
@@ -42,26 +29,14 @@ public class NflGMetDivisionalSeparation extends NflGameMetric {
           return true;
        }
 
-       // within week 5 it's too late to avoid the separation problem
-       if (weekNum <= 5) {
-          return true;
-       }
-
-       // beyond week 10 it's better to let nature take it's course, maybe the first
-       // divisional game will schedule naturally
-       if (weekNum >= 10) {
-          return true;
-       }
-
        // has the other divisional game been scheduled yet - in a later week
        // if so - no problem - otherwise - incentivize this game with a negative
        // penalty
-       boolean divisionalPairScheduled = false;
 
-       int sDir = NflDefs.schedulingDirection;
+      int divisionalPairWeekScheduled = 0;
 
-       NflTeamSchedule teamSchedule = gameSchedule.homeTeamSchedule;
-       for (int wi = weekNum - sDir; (sDir == -1) ? wi <= NflDefs.numberOfWeeks : wi >= 1; wi -= sDir) {
+      NflTeamSchedule teamSchedule = gameSchedule.homeTeamSchedule;
+      for (int wi = 1; wi <= NflDefs.numberOfWeeks; wi++) {
           NflGameSchedule teamGame2 = teamSchedule.scheduledGames[wi - 1];
 
           if (teamGame2 == null || teamGame2.isBye || !teamGame2.game.findAttribute("division")) {
@@ -70,19 +45,29 @@ public class NflGMetDivisionalSeparation extends NflGameMetric {
 
           if (gameSchedule.game.awayTeam.equalsIgnoreCase(teamGame2.game.homeTeam)
                 && gameSchedule.game.homeTeam.equalsIgnoreCase(teamGame2.game.awayTeam)) {
-             divisionalPairScheduled = true;
+             divisionalPairWeekScheduled = wi;
              break;
           }
        }
 
-       if (divisionalPairScheduled) {
+       if (divisionalPairWeekScheduled > 5) {
+          // Not possible to schedule pair within week 5
           return true;
        }
+       else if (divisionalPairWeekScheduled > 0) {
+          if (weekNum <= 5) {
+             // the candidate would schedule in week 5 thus the pair would be within week 5
+             // That's a hard violation - not allowable
+             hardViolation = true;
+             score = 5;
+          }
+       }
+       else if (weekNum > 5) {
+          // Neither games of the divisional pair are inside of 5
+          // incentivize to schedule at least one of the games outside of week 5
 
-       // score incentivizes the game in a sliding scale where week 6 is the most
-       // urgent
-
-       score = -(10 - weekNum);
+          score = -1;
+       }
 
        return true;
     }

@@ -42,7 +42,7 @@ public class NflScheduleAlgForAndBack extends NflScheduleAlg {
             remWeeksToSchedule = bWeekScheduled - fWeekScheduled - 1;
             reschedAttemptsSameWeek = 0;
             logWeeklyDataWeekScheduleAttempt(schedule, NflWeeklyData.weekScheduleResultType.success);
-            sDir *= -1;  // reverse the scheduling direction
+            NflDefs.schedulingDirection = (sDir *= -1);  // reverse the scheduling direction
             numWeeksBack = 0;
          }
          else {
@@ -93,7 +93,7 @@ public class NflScheduleAlgForAndBack extends NflScheduleAlg {
                   reschedAttemptsSameWeek = 0;
                   remWeeksToSchedule = bWeekScheduled - fWeekScheduled - 1;
                   logWeeklyDataWeekScheduleAttempt(schedule, NflWeeklyData.weekScheduleResultType.failMultiWeeksBack);
-                  sDir *= -1;  // reverse the scheduling direction
+                  NflDefs.schedulingDirection = (sDir *= -1);  // reverse the scheduling direction
                   bWeekSuccess = true;
                   fWeekSuccess = true;
                }
@@ -107,7 +107,7 @@ public class NflScheduleAlgForAndBack extends NflScheduleAlg {
                   updateDemotionInfo(schedule, weekNum); 
                   reschedAttemptsSameWeek=0;
                   logWeeklyDataWeekScheduleAttempt(schedule, NflWeeklyData.weekScheduleResultType.failChangeDir);
-                  sDir *= -1;  // reverse the scheduling direction   
+                  NflDefs.schedulingDirection = (sDir *= -1);  // reverse the scheduling direction
                }
             }
             else {

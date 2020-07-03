@@ -3,11 +3,11 @@ GameMetric,ConflictsInWeek,1.0
 GameMetric,RoadTripLimit,1.0
 GameMetric,HomeStandLimit,1.0
 GameMetric,LastGameUnschedulable,1.0
-GameMetric,BalancedHomeAway,1.0
-GameMetric,StadiumResource,1.0
-GameMetric,DivisionalWeekLimits,1.0
-GameMetric,DivisionalSeparation,1.0
-GameMetric,BalancedDivisional,1.0
+GameMetric,BalancedHomeAway,0.2
+GameMetric,StadiumResource,0.0
+GameMetric,DivisionalWeekLimits,0.2
+GameMetric,DivisionalSeparation,0.0
+GameMetric,BalancedDivisional,0.2
 GameMetric,RemainingOpportunities,1.0
 ScheduleMetric,NoRepeatedMatchup,1.0
 ScheduleMetric,RoadTripLimit,1.0

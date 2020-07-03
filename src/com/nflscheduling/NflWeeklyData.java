@@ -3,6 +3,7 @@ package com.nflscheduling;
 import java.util.LinkedHashMap;
 
 public class NflWeeklyData {
+    public int iterNum;
     public int weekNum;
     public boolean success = true;
     public weekScheduleResultType weekResult = weekScheduleResultType.success;
@@ -31,6 +32,7 @@ public class NflWeeklyData {
     public boolean homeStandHardViolation = false;
     public boolean roadTripHardViolation = false;
     public boolean repeatedMatchUpHardViolation = false;
+    public int fpSkipCount = 0;
 
     public enum weekScheduleResultType {
         success,

@@ -1513,10 +1513,10 @@ public class NflScheduler {
                else if (token[1].equalsIgnoreCase("DivisionalWeekLimits")) {
                   gameMetric = new NflGMetDivisionalWeekLimits("DivisionalWeekLimits",null);
                }
-               else if (token[2].equalsIgnoreCase("DivisionalSeparation")) {
+               else if (token[1].equalsIgnoreCase("DivisionalSeparation")) {
                   gameMetric = new NflGMetDivisionalSeparation("DivisionalSeparation",null);
                }
-               else if (token[2].equalsIgnoreCase("BalancedDivisional")) {
+               else if (token[1].equalsIgnoreCase("BalancedDivisional")) {
                   gameMetric = new NflGMetBalancedDivisional("BalancedDivisional",null);
                }
                else if (token[1].equalsIgnoreCase("RemainingOpportunities")) {
@@ -1526,8 +1526,10 @@ public class NflScheduler {
                   System.out.println("Unrecognized game Metric: " + token[1]);
                   continue;
                }
-               gameMetrics.put(gameMetric.metricName, gameMetric);
                gameMetric.weight = Double.parseDouble(token[2]);
+               if (gameMetric.weight > 0.0) {
+                  gameMetrics.put(gameMetric.metricName, gameMetric);
+               }
             }
             else if (token[0].equalsIgnoreCase("ScheduleMetric")) {
                if (token[1].equalsIgnoreCase("NoRepeatedMatchup")) {
@@ -1555,8 +1557,10 @@ public class NflScheduler {
                   System.out.println("Unrecognized schedule Metric: " + token[1]);
                   continue;
                }
-               scheduleMetrics.put(scheduleMetric.metricName, scheduleMetric);
                scheduleMetric.weight = Double.parseDouble(token[2]);
+               if (scheduleMetric.weight > 0.0) {
+                  scheduleMetrics.put(scheduleMetric.metricName, scheduleMetric);
+               }
             }
          }
       } catch (FileNotFoundException e) {

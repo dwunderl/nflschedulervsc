@@ -35,7 +35,6 @@ public class NflSMetDivisionalSeparation extends NflScheduleMetric {
 	           if (teamGame1.game.awayTeam.equalsIgnoreCase(teamGame2.game.homeTeam) &&
 	               teamGame1.game.homeTeam.equalsIgnoreCase(teamGame2.game.awayTeam)) {
 	               score+= 2.0;
-	    		   //System.out.println("ScheduleMetric : DivisionalSeparation alert for weeks: " + wi1 + ", " + wi2 + " teams: " + teamGame1.game.homeTeam + ", " + teamGame1.game.awayTeam);
 	    		   NflScheduleAlert alert = new NflScheduleAlert();
 	    		   alert.alertDescr = metricName;
 	    		   alert.weekNum = wi2;
