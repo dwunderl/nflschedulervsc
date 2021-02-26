@@ -4,8 +4,8 @@ SchedulingDirection,1
 reschedAttemptsMultiWeeksBackLimit,25
 reschedAttemptsOneWeekBackLimit,25
 reschedAttemptsSameWeekLimit,25
-scheduleAttempts,1
-savedScheduleLimit,7
+scheduleAttempts,50
+savedScheduleLimit,1
 alertLimit,7
 hardViolationLimit,0
 algorithmType,Backward

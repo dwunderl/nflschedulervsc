@@ -1076,10 +1076,43 @@ public class NflScheduler {
 
          // Write out Bye Counts per week
          bw.write("\nByes");
+         int byeCountThisSchedule = 0;
          for (int wi = 1; wi <= NflDefs.numberOfWeeks; wi++) {
-            int byeCountsThisWeek = schedule.byeCounts(wi);
-            bw.write("," + byeCountsThisWeek);
+            int byeCountThisWeek = schedule.byeCount(wi);
+            bw.write("," + byeCountThisWeek);
+            byeCountThisSchedule += byeCountThisWeek;
          }
+         bw.write("," + byeCountThisSchedule);
+
+         // Forced - per week - total at the end
+         int forcedCountThisSchedule = 0;
+         bw.write("\nForced");
+         for (int wi = 1; wi <= NflDefs.numberOfWeeks; wi++) {
+            int forcedCountThisWeek = schedule.forcedCount(wi);
+            bw.write("," + forcedCountThisWeek);
+            forcedCountThisSchedule += forcedCountThisWeek;
+         }
+         bw.write("," + forcedCountThisSchedule);
+
+         // Chosen - per week - total at the end
+         int chosenCountThisSchedule = 0;
+         bw.write("\nChosen");
+         for (int wi = 1; wi <= NflDefs.numberOfWeeks; wi++) {
+            int chosenCountThisWeek = schedule.chosenCount(wi);
+            bw.write("," + chosenCountThisWeek);
+            chosenCountThisSchedule += chosenCountThisWeek;
+         }
+         bw.write("," + chosenCountThisSchedule);
+
+         // Choices - per week - total at the end
+         double choicesCountThisSchedule = 1;
+         bw.write("\nChoices");
+         for (int wi = 1; wi <= NflDefs.numberOfWeeks; wi++) {
+            double choicesCountThisWeek = schedule.choicesCount(wi);
+            bw.write("," + choicesCountThisWeek);
+            choicesCountThisSchedule *= choicesCountThisWeek;
+         }
+         bw.write("," + choicesCountThisSchedule/NflSchedule.factorial(NflDefs.numberOfWeeks));
 
          // Write out Divisional Game Counts per week
 
