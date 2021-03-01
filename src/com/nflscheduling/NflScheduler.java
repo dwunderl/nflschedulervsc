@@ -224,6 +224,9 @@ public class NflScheduler {
                savedScheduleFileName = "curSchedule" + schedules.size() + ".csv";
                writeScheduleCsv(curSchedule, savedScheduleFileName);
                algorithm.terminationReason += ", " + savedScheduleFileName;
+
+               savedScheduleFileName = "curScheduleChoices" + schedules.size() + ".csv";
+               writeScheduleChoicesCsv(curSchedule, savedScheduleFileName);
             }
          }
 
@@ -1042,7 +1045,7 @@ public class NflScheduler {
                else if (gameSchedule.isBye) {
                   bw.write(",Bye");
                } else if (gameSchedule.game.homeTeam.equalsIgnoreCase(teamSchedule.team.teamName)) {
-                  bw.write("," + gameSchedule.game.awayTeam);
+                  bw.write("," + gameSchedule.game.awayTeam + ":"+gameSchedule.weekScheduleSequence+":"+gameSchedule.candidateCount);
                   // bw.write("," + gameSchedule.game.awayTeam + "." +
                   // gameSchedule.weekScheduleSequence);
                } else {
@@ -1073,10 +1076,43 @@ public class NflScheduler {
 
          // Write out Bye Counts per week
          bw.write("\nByes");
+         int byeCountThisSchedule = 0;
          for (int wi = 1; wi <= NflDefs.numberOfWeeks; wi++) {
-            int byeCountsThisWeek = schedule.byeCounts(wi);
-            bw.write("," + byeCountsThisWeek);
+            int byeCountThisWeek = schedule.byeCount(wi);
+            bw.write("," + byeCountThisWeek);
+            byeCountThisSchedule += byeCountThisWeek;
          }
+         bw.write("," + byeCountThisSchedule);
+
+         // Forced - per week - total at the end
+         int forcedCountThisSchedule = 0;
+         bw.write("\nForced");
+         for (int wi = 1; wi <= NflDefs.numberOfWeeks; wi++) {
+            int forcedCountThisWeek = schedule.forcedCount(wi);
+            bw.write("," + forcedCountThisWeek);
+            forcedCountThisSchedule += forcedCountThisWeek;
+         }
+         bw.write("," + forcedCountThisSchedule);
+
+         // Chosen - per week - total at the end
+         int chosenCountThisSchedule = 0;
+         bw.write("\nChosen");
+         for (int wi = 1; wi <= NflDefs.numberOfWeeks; wi++) {
+            int chosenCountThisWeek = schedule.chosenCount(wi);
+            bw.write("," + chosenCountThisWeek);
+            chosenCountThisSchedule += chosenCountThisWeek;
+         }
+         bw.write("," + chosenCountThisSchedule);
+
+         // Choices - per week - total at the end
+         double choicesCountThisSchedule = 1;
+         bw.write("\nChoices");
+         for (int wi = 1; wi <= NflDefs.numberOfWeeks; wi++) {
+            double choicesCountThisWeek = schedule.choicesCount(wi);
+            bw.write("," + choicesCountThisWeek);
+            choicesCountThisSchedule *= choicesCountThisWeek;
+         }
+         bw.write("," + choicesCountThisSchedule/NflSchedule.factorial(NflDefs.numberOfWeeks));
 
          // Write out Divisional Game Counts per week
 
@@ -1132,6 +1168,102 @@ public class NflScheduler {
 
          // System.out.println("Done");
 
+      } catch (IOException e) {
+         e.printStackTrace();
+      } finally {
+         try {
+
+            if (bw != null)
+               bw.close();
+
+            if (fw != null)
+               fw.close();
+
+         } catch (IOException ex) {
+            ex.printStackTrace();
+
+         }
+      }
+
+      return true;
+   }
+
+   public boolean writeScheduleChoicesCsv(NflSchedule schedule, String fileName) {
+      // System.out.println("Entered writeScheduleCsv");
+      BufferedWriter bw = null;
+      FileWriter fw = null;
+
+      try {
+         fw = new FileWriter(fileName);
+         bw = new BufferedWriter(fw);
+
+         // write the header to the file
+         // team, week 1 opponent, week 2 opponent
+         bw.write("Team");
+         // bw.write(",Week 1,Week 2,Week 3,Week 4,Week 5,Week 6,Week 7,Week 8,Week 9");
+         // bw.write(",Week 10,Week 11,Week 12,Week 13,Week 14,Week 15,Week 16,Week
+         // 17\n");
+         for (int wi = 1; wi <= NflDefs.numberOfWeeks; wi++) {
+            bw.write(",Week " + wi);
+         }
+         bw.write("\n");
+
+         // handle byes
+
+         // loop through the teams in the schedule
+         // start line with teamname
+         for (int ti = 0; ti < schedule.teamSchedules.size(); ti++) {
+            NflTeamSchedule teamSchedule = schedule.teamSchedules.get(ti);
+            // loop through the scheduledGames array
+            // append "," to the line
+            // get game from the array
+            // if null, append 0 to the line
+            // else if team is home - append the away teamname
+            // else if team is away - append "at " home team name
+
+            bw.write(teamSchedule.team.teamName);
+            // int scheduledGameCount = 0;
+            for (int gi = 0; gi < teamSchedule.scheduledGames.length; gi++) {
+               NflGameSchedule gameSchedule = teamSchedule.scheduledGames[gi];
+
+               if (gameSchedule == null) {
+                  bw.write(",0");
+               }
+               // else if (gameSchedule.game.findAttribute("bye")) {
+
+               else if (gameSchedule.isBye) {
+                  bw.write(",Bye");
+               } else if (gameSchedule.game.homeTeam.equalsIgnoreCase(teamSchedule.team.teamName)) {
+                  if (!gameSchedule.restrictedGame) {
+                     bw.write("," + gameSchedule.candidateCount);
+                  }
+                  else {
+                     bw.write(",forced " + gameSchedule.game.awayTeam);
+                  }
+                  // bw.write("," + gameSchedule.game.awayTeam + "." +
+                  // gameSchedule.weekScheduleSequence);
+               } else {
+                  bw.write(",at " + gameSchedule.game.homeTeam);
+                  // bw.write(",at " + gameSchedule.game.homeTeam + "." +
+                  // gameSchedule.weekScheduleSequence);
+               }
+
+               if (gameSchedule != null && gameSchedule.stadium != null
+                     && gameSchedule.stadium.equalsIgnoreCase("london")) {
+                  bw.write(" (Lon)");
+               } else if (gameSchedule != null && gameSchedule.stadium != null
+                     && gameSchedule.stadium.equalsIgnoreCase("mexico")) {
+                  bw.write(" (Mex)");
+               }
+
+               if (gameSchedule != null) {
+                  // scheduledGameCount++;
+               }
+            }
+            bw.write("\n");
+            // System.out.println("team: " + ti + ", " + teamSchedule.team.teamName + ",
+            // scheduledGames: " + scheduledGameCount);
+         }
       } catch (IOException e) {
          e.printStackTrace();
       } finally {

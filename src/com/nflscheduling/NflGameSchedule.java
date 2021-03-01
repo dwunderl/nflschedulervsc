@@ -39,6 +39,7 @@ public class NflGameSchedule {
       promotionScore = 0;
       schedule = theSchedule;
       isBye = theGame.isBye;
+      candidateCount = 0;
    }
    
    public boolean initGame(LinkedHashMap<String,NflGameMetric> gMetricsToUse) 
@@ -57,6 +58,7 @@ public class NflGameSchedule {
          metrics.add(newGameMetric);
       }
 
+      weekScheduleSequence = 0;
       candidateCount = 0;
       
       return true;
