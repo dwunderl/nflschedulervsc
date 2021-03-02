@@ -223,9 +223,6 @@ public class NflScheduler {
                savedScheduleFileName = "curSchedule" + schedules.size() + ".csv";
                writeScheduleCsv(curSchedule, savedScheduleFileName);
                algorithm.terminationReason += ", " + savedScheduleFileName;
-
-               savedScheduleFileName = "curScheduleChoices" + schedules.size() + ".csv";
-               writeScheduleChoicesCsv(curSchedule, savedScheduleFileName);
             }
          }
 
@@ -518,18 +515,22 @@ public class NflScheduler {
             }
 
             if (teamName.equalsIgnoreCase("all")) {
-               // for (int ti=0; ti < curSchedule.teams.size(); ti++) {
                for (int ti = 0; ti < teams.size(); ti++) {
-                  // NflTeamSchedule teamSchedule = curSchedule.teams.get(ti);
-                  // NflRestrictedGame restrictedGame = new
-                  // NflRestrictedGame(teamSchedule.team.teamName, weekNum, restriction,
-                  // otherTeamName, stadium);
                   NflTeam team = teams.get(ti);
+                  
+                  if (NflRestrictedGame.exists(team.teamName,weekNum,restrictedGames)) {
+                     continue;  // avoid duplicate game
+                  }
+
                   NflRestrictedGame restrictedGame = new NflRestrictedGame(team.teamName, weekNum, restriction,
                         otherTeamName, stadium);
                   weeks.add(restrictedGame);
                }
             } else {
+               if (NflRestrictedGame.exists(teamName,weekNum,restrictedGames)) {
+                  continue;  // avoid duplicate game
+               }
+
                NflRestrictedGame restrictedGame = new NflRestrictedGame(teamName, weekNum, restriction,
                      otherTeamName, stadium);
                weeks.add(restrictedGame);
@@ -1039,7 +1040,6 @@ public class NflScheduler {
                if (gameSchedule == null) {
                   bw.write(",0");
                }
-               // else if (gameSchedule.game.findAttribute("bye")) {
 
                else if (gameSchedule.isBye) {
                   bw.write(",Bye");
@@ -1167,37 +1167,14 @@ public class NflScheduler {
 
          // System.out.println("Done");
 
-      } catch (IOException e) {
-         e.printStackTrace();
-      } finally {
-         try {
-
-            if (bw != null)
-               bw.close();
-
-            if (fw != null)
-               fw.close();
-
-         } catch (IOException ex) {
-            ex.printStackTrace();
-
-         }
-      }
-
-      return true;
-   }
-
-   public boolean writeScheduleChoicesCsv(NflSchedule schedule, String fileName) {
-      // System.out.println("Entered writeScheduleCsv");
-      BufferedWriter bw = null;
-      FileWriter fw = null;
-
-      try {
-         fw = new FileWriter(fileName);
-         bw = new BufferedWriter(fw);
-
+         ////////////////////////////////////////////////
+         // Choices Table - now in same curSchedule file
+         ///////////////////////////////////////////////
+         
          // write the header to the file
          // team, week 1 opponent, week 2 opponent
+         bw.write("\n");
+
          bw.write("Team");
          // bw.write(",Week 1,Week 2,Week 3,Week 4,Week 5,Week 6,Week 7,Week 8,Week 9");
          // bw.write(",Week 10,Week 11,Week 12,Week 13,Week 14,Week 15,Week 16,Week
@@ -1228,7 +1205,6 @@ public class NflScheduler {
                if (gameSchedule == null) {
                   bw.write(",0");
                }
-               // else if (gameSchedule.game.findAttribute("bye")) {
 
                else if (gameSchedule.isBye) {
                   bw.write(",Bye");
@@ -1263,6 +1239,7 @@ public class NflScheduler {
             // System.out.println("team: " + ti + ", " + teamSchedule.team.teamName + ",
             // scheduledGames: " + scheduledGameCount);
          }
+
       } catch (IOException e) {
          e.printStackTrace();
       } finally {
