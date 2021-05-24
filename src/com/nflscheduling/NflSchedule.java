@@ -33,6 +33,18 @@ public class NflSchedule {
    NflSchedule() {
    }
 
+   static double factorial(int N) 
+   { 
+       // Initialize result 
+       double f = 1; 
+ 
+       // Multiply f with 2, 3, ...N 
+       for (int i = 2; i <= N; i++) 
+           f *= i;
+ 
+       return f; 
+   } 
+
    public boolean init(ArrayList<NflTeam> teams, 
 		               ArrayList<NflGame> games,
                      ArrayList<NflResource> resources,
@@ -143,7 +155,6 @@ public class NflSchedule {
 
    /*
    public boolean createByeSchedules() {
-
       // TBD:Byes
       // create a bye/gameschedule for each pair of teams according NflDefs.numberOfTeams/2
       // keep a collection of the byes
@@ -154,7 +165,6 @@ public class NflSchedule {
 		  bye.initBye();
 		  unscheduledByes.add(bye);
 	  }
-
       return true;
    }
 */
@@ -260,11 +270,10 @@ public class NflSchedule {
 		Min(
 			remByesToSched - (RemByeMin - MinByes) - ForcedByes(usage),
 			MaxByes - ForcedByes(usage))
-
     * 
     */
    
-   public int byeCounts(int weekNum) {
+   public int byeCount(int weekNum) {
 	   int byeCount = 0;
 	   
        for (NflTeamSchedule teamSchedule: teamSchedules) {
@@ -277,6 +286,64 @@ public class NflSchedule {
        }
         
        return byeCount;
+   }
+
+   public int forcedCount(int weekNum) {
+	   int forcedCount = 0;
+	   
+       for (NflTeamSchedule teamSchedule: teamSchedules) {
+          if (teamSchedule.scheduledGames[weekNum-1] != null) {
+             NflGameSchedule scheduledGame = teamSchedule.scheduledGames[weekNum-1];
+             if (scheduledGame.game.homeTeam.equalsIgnoreCase(teamSchedule.team.teamName) && !scheduledGame.isBye) {
+               if (scheduledGame.restrictedGame) {
+                  forcedCount++;
+                }
+             }
+          }
+       }
+        
+       return forcedCount;
+   }
+
+   //chosenCounts
+   public int chosenCount(int weekNum) {
+	   int chosenCount = 0;
+	   
+       for (NflTeamSchedule teamSchedule: teamSchedules) {
+          if (teamSchedule.scheduledGames[weekNum-1] != null) {
+             NflGameSchedule scheduledGame = teamSchedule.scheduledGames[weekNum-1];
+             if (scheduledGame.game.homeTeam.equalsIgnoreCase(teamSchedule.team.teamName) && !scheduledGame.isBye) {
+               if (!scheduledGame.restrictedGame) {
+                  chosenCount++;
+                }
+             }
+          }
+       }
+        
+       return chosenCount;
+   }
+
+   //choices
+   public double choicesCount(int weekNum) {
+      double choicesCount = 1;
+      int chosenGameCount = 0;
+	   
+       for (NflTeamSchedule teamSchedule: teamSchedules) {
+          if (teamSchedule.scheduledGames[weekNum-1] != null) {
+             NflGameSchedule scheduledGame = teamSchedule.scheduledGames[weekNum-1];
+             if (scheduledGame.game.homeTeam.equalsIgnoreCase(teamSchedule.team.teamName) && !scheduledGame.isBye) {
+               if (!scheduledGame.restrictedGame) {
+                  choicesCount *= scheduledGame.candidateCount;
+                  chosenGameCount++;
+                  System.out.println("Week:" + weekNum + "team: "  + teamSchedule.team.teamName + 
+                  " candidateCount:" + scheduledGame.candidateCount + ", chosenGameCount:" + chosenGameCount);
+                }
+             }
+          }
+       }
+       System.out.println("Week:" + weekNum + ", choicesCount: " + choicesCount + ", chosenGameCount: " + chosenGameCount + 
+       ", factorial(chosenGameCount): " + factorial(chosenGameCount) + ", cc/fact: " + choicesCount/factorial(chosenGameCount));
+       return choicesCount/factorial(chosenGameCount);
    }
 
    public int divisionalGameCount(int weekNum) {
