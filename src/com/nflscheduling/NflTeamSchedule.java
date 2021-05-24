@@ -11,6 +11,7 @@ public class NflTeamSchedule {
 	
 	public NflTeam team;
 	public NflGameSchedule[] scheduledGames;
+   public NflTeamWeek[] teamWeeks;
 	public int homeGameRunLength = 0;
 	public int awayGameRunLength = 0;
 	public int scheduledGameCount = 0;

@@ -25,8 +25,8 @@ public class NflGMetRemainingOpportunities extends NflGameMetric {
       
       // Find game/teams with most unscheduled games - save that as maxUnscheduledGames
       
-      int maxRemainingGameCount = 0;
-      int myRemainingGameCount = 0;
+      int maxMinRemainingGameCount = 0;
+      int myMinRemainingGameCount = 0;
       
  	  for(NflGameSchedule usGame: candidateGames) {	       
  	     NflTeamSchedule homeTeamSched = schedule.findTeam(usGame.game.homeTeam);
@@ -45,17 +45,17 @@ public class NflGMetRemainingOpportunities extends NflGameMetric {
  	        if (awayGame == null || awayGame.isBye) {
 	           awayTeamUSgameCount++;
 	    	}
- 	    	    
- 	        int minRemainingGameCount = Math.min(homeTeamUSgameCount, awayTeamUSgameCount);
- 	    	    maxRemainingGameCount = Math.max(minRemainingGameCount, maxRemainingGameCount);
- 	    	    
-            if (usGame == gameSchedule) {
-               myRemainingGameCount = minRemainingGameCount;
- 	    	}
- 	      }
- 	   }
+ 	     }
 
- 	  score = 1.0*(1.0 - (double) maxRemainingGameCount/ (double) myRemainingGameCount);
+		 int minRemainingGameCount = Math.min(homeTeamUSgameCount, awayTeamUSgameCount);
+		     maxMinRemainingGameCount = Math.max(minRemainingGameCount, maxMinRemainingGameCount);
+		   
+	     if (usGame == gameSchedule) {
+		    myMinRemainingGameCount = minRemainingGameCount;
+	     }
+ 	  }
+
+ 	  score = 1.0*(1.0 - (double) maxMinRemainingGameCount/ (double) myMinRemainingGameCount);
       //System.out.println("Info: Remaining Opportunities metric for game, weekNum: " + weekNum + " home team: " + gameSchedule.game.homeTeam + " away team: " + gameSchedule.game.awayTeam
       //	                   + ", myRemainingGameCount: " + myRemainingGameCount + ", maxRemainingGameCount: " + maxRemainingGameCount + ", score: " + score);
 	   

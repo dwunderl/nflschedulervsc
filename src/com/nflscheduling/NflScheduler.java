@@ -26,7 +26,7 @@ public class NflScheduler {
                                                    // Each team has an array of scheduled games - 1 per week
                                                    // Byes are scheduled games marked with isBye=true
                                                    // Holds arrays of allGames, unscheduledGames, unscheduledByes
-   public NflScheduleAlg algorithm;
+   public NflScheduleByWeekAlg algorithm;
 
    public ArrayList<NflRestrictedGame> restrictedGames; // The restrictedGames are games forced into fixed/specified weeks
                                                         // Some are pre-defined in file nflforcedgames.csv
@@ -196,7 +196,7 @@ public class NflScheduler {
 
          curSchedule = new NflSchedule();
          curSchedule.init(teams, games, resources, scheduleMetrics,gameMetrics);
-         NflWeeklyData.init(curSchedule.allGames.get(0));
+         NflWeeklyData.init(curSchedule.allGames.get(0));  // init weekly logging data structure
          algorithm.curSchedule = curSchedule;
          algorithm.scheduleInit();
 

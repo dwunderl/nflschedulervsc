@@ -1,6 +1,6 @@
 package com.nflscheduling;
 
-public class NflScheduleAlgForOrBack extends NflScheduleAlg {
+public class NflScheduleAlgForOrBack extends NflScheduleByWeekAlg {
     
    // Adapted version from ForwardAndBackward - to do ForwardOrBackward
    // And to be very harmonized with ForwardAndBackward

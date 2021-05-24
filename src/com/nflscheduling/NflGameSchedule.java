@@ -83,7 +83,7 @@ public class NflGameSchedule {
    }
 
    public boolean computeMetrics(int weekNum, NflSchedule schedule, ArrayList<NflGameSchedule> candidateGames,
-                                 NflScheduleAlg alg) {
+                                 NflScheduleByWeekAlg alg) {
       score = 0.0;
       hardViolationCount = 0;
 

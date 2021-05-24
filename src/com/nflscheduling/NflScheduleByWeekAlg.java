@@ -3,7 +3,7 @@ package com.nflscheduling;
 import java.util.*;
 import java.io.IOException;
 
-public class NflScheduleAlg {
+public class NflScheduleByWeekAlg {
 
    public NflScheduler scheduler;
 
@@ -530,12 +530,16 @@ public class NflScheduleAlg {
          }
       }
 
+      // for (int gi=0; gi < schedule.unscheduledGames.size(); gi++) {
       for (final NflGameSchedule usgame : schedule.unscheduledGames) {
          if (usgame.isBye) {
             unscheduledByes.add(usgame);
          } else {
             unscheduledGames.add(usgame);
          }
+
+         // System.out.println("Scheduler: Unscheduled: home team " +
+         // usgame.game.homeTeam + ", away team: " + usgame.game.awayTeam);
       }
 
       if (scheduler.briefLogBw != null) {

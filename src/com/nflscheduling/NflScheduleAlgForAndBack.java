@@ -1,6 +1,6 @@
 package com.nflscheduling;
 
-public class NflScheduleAlgForAndBack extends NflScheduleAlg {
+public class NflScheduleAlgForAndBack extends NflScheduleByWeekAlg {
 
    @Override
    public boolean scheduleUnrestrictedGames(final NflSchedule schedule) {

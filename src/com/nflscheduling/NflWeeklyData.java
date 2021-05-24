@@ -43,6 +43,8 @@ public class NflWeeklyData {
         failExhaustAllRetries
     }
 
+    // Load static gameMetrics hashMap to support logging
+    
     public static boolean init(NflGameSchedule gameSchedule) {
         gameMetrics = new LinkedHashMap<String,Float>();
         for (int mi = 0; mi < gameSchedule.metrics.size(); mi++) {
