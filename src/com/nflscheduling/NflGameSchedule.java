@@ -24,6 +24,8 @@ public class NflGameSchedule {
    public NflTeamSchedule awayTeamSchedule;
    public ArrayList<NflGameSchedule> unscheduledByes;
    public ArrayList<NflGameSchedule> opponentByes;
+   public ArrayList<NflTeamWeek> candidateTeamWeeks;
+
    public int byeCandidateScore;
 
    public boolean isBye;
@@ -48,6 +50,7 @@ public class NflGameSchedule {
       stadium = homeTeamSchedule.team.stadium;
       unscheduledByes = new ArrayList<NflGameSchedule>();
       metrics = new ArrayList<NflGameMetric>();
+      candidateTeamWeeks = new ArrayList<NflTeamWeek>();
 
       // install metrics into each gameSchedule
       for (Map.Entry<String,NflGameMetric> gameMetricEntry : gMetricsToUse.entrySet()) {

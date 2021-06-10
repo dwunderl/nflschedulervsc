@@ -26,7 +26,8 @@ public class NflScheduler {
                                                    // Each team has an array of scheduled games - 1 per week
                                                    // Byes are scheduled games marked with isBye=true
                                                    // Holds arrays of allGames, unscheduledGames, unscheduledByes
-   public NflScheduleByWeekAlg algorithm;
+   public NflScheduleAlg algorithm;
+   //public NflScheduleByWeekAlg algorithm;
 
    public ArrayList<NflRestrictedGame> restrictedGames; // The restrictedGames are games forced into fixed/specified weeks
                                                         // Some are pre-defined in file nflforcedgames.csv
@@ -49,7 +50,7 @@ public class NflScheduler {
    //            - ought to divide reschedLog lines by 2 to get number of failures requiring backtracking - when logging "Rescheduled Weeks:"
    // 
    
-   public ArrayList<String> reschedLog;
+   //public ArrayList<String> reschedLog;
 
    public int reschedAttemptsSameWeek;       // retries in same week before giving up and going back 1 week
                                              // unschedule the failed week, demote a game and retry the week
@@ -62,7 +63,9 @@ public class NflScheduler {
    public int scheduleAttempts;
 
    public String terminationReason;
-   
+   public BufferedWriter schedAttemptsLogBw = null;
+   public FileWriter schedAttemptsLogFw = null;
+
    //  Demotion Scheme: TBD document it
    //  Promotion scheme is not used - promotionInfo
    
@@ -121,14 +124,7 @@ public class NflScheduler {
    // TBD: study and rethink if this really makes any real sense
    
    public ArrayList<NflTeamSchedule> unscheduledTeams = new ArrayList<NflTeamSchedule>();
-   public BufferedWriter briefLogBw = null;
-   public FileWriter briefLogFw = null;
-   public BufferedWriter partialScheduleLogBw = null;
-   public FileWriter partialScheduleLogFw = null;
-   public BufferedWriter schedAttemptsLogBw = null;
-   public FileWriter schedAttemptsLogFw = null;
-   public BufferedWriter reschedLogBw = null;
-   public FileWriter reschedLogFw = null;
+   
    public boolean reschedLogOn = true;
 
    public boolean init() {
@@ -188,29 +184,28 @@ public class NflScheduler {
       // initialize unscheduledGames of the curSchedule from all the modeled games
 
       openSchedAttemptsLogFile();
-      openReschedLogFile();
 
       for (scheduleAttempts = 1; scheduleAttempts <= NflDefs.scheduleAttempts; scheduleAttempts++) {
          rnd = new Random();
 
          curSchedule = new NflSchedule();
          curSchedule.init(teams, games, resources, scheduleMetrics,gameMetrics);
-         NflWeeklyData.init(curSchedule.allGames.get(0));  // init weekly logging data structure
+         //NflWeeklyData.init(curSchedule.allGames.get(0));  // init weekly logging data structure
          algorithm.curSchedule = curSchedule;
          algorithm.scheduleInit();
 
          // Schedule games that are restricted - according to the restrictedGames
-         scheduleForcedGames(restrictedGames, algorithm.curSchedule);
+         algorithm.scheduleForcedGames(restrictedGames, algorithm.curSchedule);
 
-         reschedLog = new ArrayList<String>();
-         openBriefLogFile();
-         openPartialScheduleLogFile();
+         //reschedLog = new ArrayList<String>();
+         algorithm.openLogging();
  
          // Schedule the remaining unrestricted games
+         // This is at most derived algorithm level
          algorithm.scheduleUnrestrictedGames(algorithm.curSchedule);
 
-         closeBriefLogFile();
-         closePartialScheduleLogFile();
+         algorithm.closeLogging();
+
          String savedScheduleFileName = new String();
 
          if (curSchedule.unscheduledGames.size() == 0) {
@@ -228,7 +223,7 @@ public class NflScheduler {
 
          System.out.println("Schedule: " + scheduleAttempts + ", iterations: " + algorithm.iterNum + ", " + algorithm.terminationReason);
 
-         logSchedAttempt(scheduleAttempts, curSchedule, algorithm.iterNum, algorithm.lowestWeekNum, savedScheduleFileName);
+         logSchedAttempt(scheduleAttempts, curSchedule, algorithm.iterNum, algorithm.highWaterMark, savedScheduleFileName);
 
          if (schedules.size() >= NflDefs.savedScheduleLimit) {
             break; // hit the limit of saved schedules
@@ -236,7 +231,6 @@ public class NflScheduler {
       }
 
       closeSchedAttemptsLogFile();
-      closeReschedLogFile();
 
       return true;
    }
@@ -1363,51 +1357,6 @@ public class NflScheduler {
       return true;
    }
 
-   public boolean openReschedLogFile() {
-      if (reschedLogOn) {
-         try {
-            reschedLogFw = new FileWriter("reschedLog.csv");
-            reschedLogBw = new BufferedWriter(reschedLogFw);
-
-            // write the header to the file
-            reschedLogBw.write("Resched Log\n");
-         } catch (FileNotFoundException e) {
-            e.printStackTrace();
-         } catch (IOException e) {
-            e.printStackTrace();
-         }
-      }
-
-      return true;
-   }
-
-   public boolean writeReschedLogFile(String s) {
-      if (reschedLogOn) {
-         if (reschedLogBw != null) {
-            try {
-               reschedLogBw.write(s);
-            } catch (IOException e) {
-               e.printStackTrace();
-            }
-         }
-      }
-
-      return true;
-   }
-
-   public boolean closeReschedLogFile() {
-      if (reschedLogOn) {
-         if (reschedLogBw != null) {
-            try {
-               reschedLogBw.close();
-            } catch (IOException e) {
-               e.printStackTrace();
-            }
-         }
-      }
-
-      return true;
-   }
 
    public boolean logSchedAttempt(int schedAttempts, NflSchedule sched, int iterNum,
                                   int lowestWeekNum, String savedScheduleName) {
@@ -1430,149 +1379,6 @@ public class NflScheduler {
       return true;
    }
 
-   public boolean openBriefLogFile() {
-      try {
-         briefLogFw = new FileWriter("logBriefSchedResults.csv");
-         briefLogBw = new BufferedWriter(briefLogFw);
-
-         // write the header to the file
-         briefLogBw
-               .write("Week,Sched Games,Sched Byes,Unsched Games,Unsched Byes,Unsched Teams,Team1,Team2,Team3,Team4\n");
-      } catch (FileNotFoundException e) {
-         e.printStackTrace();
-      } catch (IOException e) {
-         e.printStackTrace();
-      }
-
-      return true;
-   }
-
-   public boolean closeBriefLogFile() {
-      if (briefLogBw != null) {
-         try {
-            briefLogBw.close();
-         } catch (IOException e) {
-            e.printStackTrace();
-         }
-      }
-
-      return true;
-   }
-
-   public boolean briefLogWeek(NflSchedule schedule, int weekNum) {
-      // for each team - check if game scheduled for this week - count them, keep a
-      // list of teams unscheduled
-      // count the byes too
-      // count the unscheduled games and the unscheduled byes
-      // write: weekNum, scheduled games, scheduled byes, unscheduled games,
-      // unscheduled byes, comma separated unscheduled teams
-      ArrayList<NflTeamSchedule> unscheduledTeams = new ArrayList<NflTeamSchedule>();
-      ArrayList<NflGameSchedule> scheduledGames = new ArrayList<NflGameSchedule>();
-      ArrayList<NflGameSchedule> scheduledByes = new ArrayList<NflGameSchedule>();
-      ArrayList<NflGameSchedule> unscheduledGames = new ArrayList<NflGameSchedule>();
-      ArrayList<NflGameSchedule> unscheduledByes = new ArrayList<NflGameSchedule>();
-
-      for (NflTeamSchedule teamSchedule : schedule.teamSchedules) {
-         NflGameSchedule gameSched = teamSchedule.scheduledGames[weekNum - 1];
-         if (gameSched != null) {
-            if (gameSched.isBye) {
-               scheduledByes.add(gameSched);
-            } else {
-               if (!scheduledGames.contains(gameSched)) {
-                  scheduledGames.add(gameSched);
-               }
-            }
-         } else {
-            unscheduledTeams.add(teamSchedule);
-         }
-      }
-
-      // for (int gi=0; gi < schedule.unscheduledGames.size(); gi++) {
-      for (NflGameSchedule usgame : schedule.unscheduledGames) {
-         if (usgame.isBye) {
-            unscheduledByes.add(usgame);
-         } else {
-            unscheduledGames.add(usgame);
-         }
-
-         // System.out.println("Scheduler: Unscheduled: home team " +
-         // usgame.game.homeTeam + ", away team: " + usgame.game.awayTeam);
-      }
-
-      if (briefLogBw != null) {
-         try {
-            briefLogBw.write(weekNum + "," + scheduledGames.size() + "," + scheduledByes.size() + ","
-                  + unscheduledGames.size() + "," + unscheduledByes.size() + "," + unscheduledTeams.size());
-            for (NflTeamSchedule unschedTeam : unscheduledTeams) {
-               briefLogBw.write("," + unschedTeam.team.teamName);
-            }
-            if (unscheduledTeams.size() == 0) {
-               briefLogBw.write(",0,0");
-            }
-
-            Collections.sort(scheduledGames, NflGameSchedule.GameScheduleComparatorBySchedSequence);
-            int gameLogLimit = 0;
-            for (NflGameSchedule schedGame : scheduledGames) {
-               if (schedGame.restrictedGame) {
-                  continue;
-               }
-               String gameInfo = "S:" + schedGame.weekScheduleSequence + ":"
-                     + schedGame.game.homeTeam.substring(0, 3) + ":" + schedGame.game.awayTeam.substring(0, 3) + ":"
-                     + schedGame.score + ":" + schedGame.demotionPenalty;
-               briefLogBw.write("," + gameInfo);
-               gameLogLimit++;
-               if (gameLogLimit >= 3) {
-                  break;
-               }
-            }
-
-            Collections.sort(unscheduledGames, NflGameSchedule.GameScheduleComparatorByDemotion);
-            gameLogLimit = 0;
-            for (NflGameSchedule usGame : unscheduledGames) {
-               String gameInfo = "U:" + usGame.game.homeTeam.substring(0, 3) + ":"
-                     + usGame.game.awayTeam.substring(0, 3) + ":" + usGame.score + ":" + usGame.demotionPenalty + ":"
-                     + usGame.demotionCount;
-               briefLogBw.write("," + gameInfo);
-               gameLogLimit++;
-               if (gameLogLimit >= 3) {
-                  break;
-               }
-            }
-            briefLogBw.write("\n");
-
-         } catch (IOException e) {
-            e.printStackTrace();
-         }
-      }
-
-      return true;
-   }
-
-   public boolean openPartialScheduleLogFile() {
-      try {
-         partialScheduleLogFw = new FileWriter("logPartialScheduleResults" + scheduleAttempts + ".csv");
-         partialScheduleLogBw = new BufferedWriter(partialScheduleLogFw);
-         partialScheduleLogBw.write("FingerPrint,Week,Iteration,Unscheduled,BaseFP,PSE Count,GamesInWeek,HighSeqNum,Unsched Games,Unsched Byes \n");
-      } catch (FileNotFoundException e) {
-         e.printStackTrace();
-      } catch (IOException e) {
-         e.printStackTrace();
-      }
-
-      return true;
-   }
-
-   public boolean closePartialScheduleLogFile() {
-      if (partialScheduleLogBw != null) {
-         try {
-            partialScheduleLogBw.close();
-         } catch (IOException e) {
-            e.printStackTrace();
-         }
-      }
-
-      return true;
-   }
 
    public boolean loadMetrics() {
       String csvFile = "nflmetrics.csv";
