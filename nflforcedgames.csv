@@ -1,4 +1,6 @@
-lions,12,hometeam
-cowboys,12,hometeam
-all,17,division
-chiefs,1,hometeam
+12,lions,anyTeam
+12,cowboys,anyTeam
+17,allTeams,division
+1,chiefs,anyTeam
+8,Falcons,raiders,london,international
+5,Broncos,bye

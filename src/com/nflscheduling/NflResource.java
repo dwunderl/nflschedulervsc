@@ -8,12 +8,14 @@ public class NflResource {
    // Instance data
 
    public String resourceName;
+   public String zone;
+
    public int[] weeklyLimit;
    public int[] weeklyMinimum;
 
    NflResource() {
-      //System.out.println("Creating an nflAttrLimit");
       weeklyLimit = new int[NflDefs.numberOfWeeks];
+      weeklyMinimum = new int[NflDefs.numberOfWeeks];
       weeklyMinimum = new int[NflDefs.numberOfWeeks];
    }
    

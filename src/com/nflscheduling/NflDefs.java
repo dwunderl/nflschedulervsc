@@ -17,7 +17,8 @@ public class NflDefs {
 	public enum AlgorithmType {Default,
 							   Forward,
 		                       Backward,
-		                       ForwardAndBackward
+		                       ForwardAndBackward,
+							   TeamWeek
 							   }
 
 	public static AlgorithmType algorithmType = AlgorithmType.Default;

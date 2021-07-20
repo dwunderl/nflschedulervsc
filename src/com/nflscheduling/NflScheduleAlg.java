@@ -1,7 +1,7 @@
 package com.nflscheduling;
 
 import java.util.*;
-import java.io.IOException;
+//import java.io.IOException;
 
 public class NflScheduleAlg {
 
@@ -42,8 +42,6 @@ public class NflScheduleAlg {
    // TBD: study and rethink if this really makes any real sense
 
    public ArrayList<NflTeamSchedule> unscheduledTeams = new ArrayList<NflTeamSchedule>();
-   public NflWeeklyData weeklyData = new NflWeeklyData();
-   public NflWeeklyData priorWeeklyData = null;
 
    public int alreadyScheduledRejection;
    public int backToBackMatchRejection;
@@ -53,7 +51,6 @@ public class NflScheduleAlg {
 
    public boolean init(NflScheduler theScheduler) {
       scheduler = theScheduler;
-      //sDir = NflDefs.schedulingDirection;
       return true;
    }
 

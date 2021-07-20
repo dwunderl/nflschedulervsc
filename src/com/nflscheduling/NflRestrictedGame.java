@@ -9,8 +9,7 @@ public class NflRestrictedGame {
 
    public String teamName; // "all" means all teams
    public int weekNum;
-   public String otherTeam;
-   public String restriction;
+   public String otherTeamSpec;
    public String stadium;
 
    public static boolean exists(String teamName, int weekNum, ArrayList<NflRestrictedGame> restrictedGames) {
@@ -18,7 +17,7 @@ public class NflRestrictedGame {
          NflRestrictedGame restrictedGame = restrictedGames.get(rgi);
          if (restrictedGame.weekNum == weekNum) {
             if (restrictedGame.teamName.equalsIgnoreCase(teamName) || 
-                restrictedGame.otherTeam.equalsIgnoreCase(teamName)) {
+                restrictedGame.otherTeamSpec.equalsIgnoreCase(teamName)) {
                return true;
             }
          }
@@ -30,11 +29,10 @@ public class NflRestrictedGame {
       System.out.println("Creating an nflRestrictedGame");
    }
 
-   NflRestrictedGame(String theTeamName, int theWeekNum, String theRestriction, String theOtherTeam, String theStadium) {
+   NflRestrictedGame(String theTeamName, int theWeekNum, String theOtherTeam, String theStadium) {
       teamName = theTeamName;
       weekNum = theWeekNum;
-      restriction = theRestriction;
-      otherTeam = theOtherTeam;
+      otherTeamSpec = theOtherTeam;
       stadium = theStadium;
    }
 }

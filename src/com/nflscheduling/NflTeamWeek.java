@@ -1,12 +1,15 @@
 package com.nflscheduling;
+import java.util.*;
 
 public class NflTeamWeek {
 	
 	public NflTeam team;
-	public NflGameSchedule[] candidateGames;
+    public ArrayList<NflGameSchedule> candidateGames;
+    public NflRestrictedGame restrictedGame;
 
 	NflTeamWeek(NflTeam theTeam) {
        team = theTeam;
-       candidateGames = new NflGameSchedule[NflDefs.numberOfWeeks];
+       restrictedGame = null;
+       candidateGames = new ArrayList<NflGameSchedule>();
     }
 }
