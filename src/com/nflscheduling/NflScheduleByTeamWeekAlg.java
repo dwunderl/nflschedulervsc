@@ -1,9 +1,15 @@
 package com.nflscheduling;
 
 import java.util.*;
-//import java.io.IOException;
+import java.io.IOException;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
 
 public class NflScheduleByTeamWeekAlg extends NflScheduleAlg {
+
+   public BufferedWriter teamWeekLogBw = null;
+   public FileWriter teamWeekLogFw = null;
 
    @Override
    public boolean init(NflScheduler theScheduler) {
@@ -66,6 +72,15 @@ public class NflScheduleByTeamWeekAlg extends NflScheduleAlg {
                   System.out.println("ERROR scheduling restricted game: unrecognized restriction: " + resOtherTeamSpec);
                   return false;
                }
+         }
+
+         if (resStadium.length() > 0) {
+            // validate that there is capacity for this week - if capacity is defined for it
+            NflResourceSchedule resourceSchedule = schedule.findResource(resStadium);
+            if (resourceSchedule != null && !resourceSchedule.hasCapacity(resWeekNum)) {
+               System.out.println("ERROR scheduling restricted game: insufficient capacity for resStadium: " + resStadium);
+               return false;
+            }
          }
 
          // Validate that not already scheduled - may have been scheduled due to opponent
@@ -176,4 +191,41 @@ public class NflScheduleByTeamWeekAlg extends NflScheduleAlg {
 
       return true;
    }
+
+   public boolean openLogging() {
+      return true;
+   }
+
+   public boolean closeLogging() {
+      return true;
+   }
+
+   public boolean openTeamWeekLogFile() {
+      try {
+         teamWeekLogFw = new FileWriter("logTeamWeekSchedResults" + scheduler.scheduleAttempts + ".csv");
+         teamWeekLogBw = new BufferedWriter(teamWeekLogFw);
+
+         // write the header to the file
+         teamWeekLogBw.write("Week,Team,CandNumBefore,CandNumAfter,Operation,Home,Away,Forced\n");
+      } catch (FileNotFoundException e) {
+         e.printStackTrace();
+      } catch (IOException e) {
+         e.printStackTrace();
+      }
+
+      return true;
+   }
+
+   public boolean closeTeamWeekLogFile() {
+      if (teamWeekLogBw != null) {
+         try {
+            teamWeekLogBw.close();
+         } catch (IOException e) {
+            e.printStackTrace();
+         }
+      }
+
+      return true;
+   }
+
 }

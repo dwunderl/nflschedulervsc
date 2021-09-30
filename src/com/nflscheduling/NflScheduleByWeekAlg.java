@@ -391,7 +391,7 @@ public class NflScheduleByWeekAlg extends NflScheduleAlg {
 
       logWeeklyDataFromScheduledGame(chosenGame);
 
-      if (!scheduler.placeGameInSchedule(chosenGame, weekNum, schedule)) {
+      if (!placeGameInSchedule(chosenGame, weekNum, schedule)) {
          return null;
       }
 
@@ -477,7 +477,7 @@ public class NflScheduleByWeekAlg extends NflScheduleAlg {
             // System.out.println("Scheduling Bye(2) in week: " + weekNum + " home team: " +
             // byeToSchedule.homeTeamSchedule.team.teamName);
 
-            scheduler.placeGameInSchedule(byeToSchedule, weekNum, schedule);
+            placeGameInSchedule(byeToSchedule, weekNum, schedule);
             byesScheduledThisWeek++;
             lastScheduledBye = byeToSchedule;
             if (byesToScheduleThisWeek - byesScheduledThisWeek <= 0) {
@@ -643,6 +643,7 @@ public class NflScheduleByWeekAlg extends NflScheduleAlg {
       // count the unscheduled games and the unscheduled byes
       // write: weekNum, scheduled games, scheduled byes, unscheduled games,
       // unscheduled byes, comma separated unscheduled teams
+
       final ArrayList<NflTeamSchedule> unscheduledTeams = new ArrayList<NflTeamSchedule>();
       final ArrayList<NflGameSchedule> scheduledGames = new ArrayList<NflGameSchedule>();
       final ArrayList<NflGameSchedule> scheduledByes = new ArrayList<NflGameSchedule>();
@@ -1196,6 +1197,14 @@ public class NflScheduleByWeekAlg extends NflScheduleAlg {
          }
 
          String resStadium = restrictedGame.stadium;
+         if (resStadium.length() > 0) {
+            // validate that there is capacity for this week - if capacity is defined for it
+            NflResourceSchedule resourceSchedule = schedule.findResource(resStadium);
+            if (resourceSchedule != null && !resourceSchedule.hasCapacity(resWeekNum)) {
+               System.out.println("ERROR scheduling restricted game: insufficient capacity for resStadium: " + resStadium);
+               return false;
+            }
+         }
 
          // Validate that not already scheduled - may have been scheduled due to opponent
          // being scheduled in that week
@@ -1218,7 +1227,7 @@ public class NflScheduleByWeekAlg extends NflScheduleAlg {
 
                usBye.candidateCount = 1;
 
-               scheduler.placeGameInSchedule(usBye, resWeekNum, schedule);
+               placeGameInSchedule(usBye, resWeekNum, schedule);
                usBye.restrictedGame = true;
                usByeScheduled = usBye;
                break;
@@ -1336,10 +1345,13 @@ public class NflScheduleByWeekAlg extends NflScheduleAlg {
 
          NflGameSchedule chosenGame = scheduler.chooseBestScoringGame(qualifiedGames);
 
-         chosenGame.stadium = resStadium;
+         if (resStadium.length() > 0) {
+            chosenGame.stadium = resStadium;
+         }
+
          chosenGame.candidateCount = 1;
 
-         scheduler.placeGameInSchedule(chosenGame, resWeekNum, schedule);
+         placeGameInSchedule(chosenGame, resWeekNum, schedule);
 
          chosenGame.restrictedGame = true;
 

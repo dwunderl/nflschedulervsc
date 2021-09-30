@@ -30,6 +30,7 @@ public class NflGameSchedule {
 
    public boolean isBye;
    public int candidateCount;
+   public boolean isInternational = false;
 
    NflGameSchedule(NflGame theGame, NflSchedule theSchedule) {
       game = theGame;

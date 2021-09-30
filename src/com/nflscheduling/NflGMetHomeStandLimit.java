@@ -19,7 +19,7 @@ public class NflGMetHomeStandLimit extends NflGameMetric {
        score = 0.0;
        hardViolation = false;
        
-       if (gameSchedule.game.isInternational) {
+       if (gameSchedule.isInternational) {
     	   // this is considered a virtual away game for the home team
     	   // so this can't participate in a home stand
     	   
@@ -44,7 +44,7 @@ public class NflGMetHomeStandLimit extends NflGameMetric {
 	         continue;  // skip over a bye week
 		  }
 		  
-		  NflGame prevWeekGame = homeTeamSched.scheduledGames[wi-1].game;
+		  NflGameSchedule prevWeekGame = homeTeamSched.scheduledGames[wi-1];
           NflTeamSchedule prevWeekAwayTeamSched = homeTeamSched.scheduledGames[wi-1].awayTeamSchedule;
 
 		  if (prevWeekAwayTeamSched == homeTeamSched || prevWeekGame.isInternational) {
@@ -62,7 +62,7 @@ public class NflGMetHomeStandLimit extends NflGameMetric {
 	   lastHomeWeek = weekNum;
 	   for (int wi=weekNum+1; wi <= NflDefs.numberOfWeeks; wi++) {
 	      if (homeTeamSched.scheduledGames[wi-1] == null) {
-			// No game scheduled (yet) for the next week
+			 // No game scheduled (yet) for the next week
 	         break;
 	      }
 	           
@@ -71,7 +71,7 @@ public class NflGMetHomeStandLimit extends NflGameMetric {
 	      }
 		       
           NflTeamSchedule nextWeekAwayTeamSched = homeTeamSched.scheduledGames[wi-1].awayTeamSchedule;
-          NflGame nextWeekGame = homeTeamSched.scheduledGames[wi-1].game;
+          NflGameSchedule nextWeekGame = homeTeamSched.scheduledGames[wi-1];
           
 	      if (nextWeekAwayTeamSched == homeTeamSched || nextWeekGame.isInternational) {
 		     // next weeks game is an away game or an international (virtual away) game

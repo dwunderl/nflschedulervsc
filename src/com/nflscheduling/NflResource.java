@@ -17,7 +17,7 @@ public class NflResource {
       weeklyLimit = new int[NflDefs.numberOfWeeks];
       weeklyMinimum = new int[NflDefs.numberOfWeeks];
       weeklyMinimum = new int[NflDefs.numberOfWeeks];
+      zone = "";
    }
-   
 }
 

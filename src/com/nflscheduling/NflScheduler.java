@@ -135,8 +135,8 @@ public class NflScheduler {
       resources = new ArrayList<NflResource>();
 
       loadTeams(teams); // base teams created globally in NflScheduler
+      loadResources();  // statdium and byes - capacities, limits, zone
       loadGames(games); // base games created globally in NflScheduler
-      loadResources();
       loadMetrics();
 
       if (NflDefs.algorithmType == AlgorithmType.Forward) {
@@ -197,11 +197,11 @@ public class NflScheduler {
          algorithm.curSchedule = curSchedule;
          algorithm.scheduleInit();
 
+         algorithm.openLogging();
+
          // Schedule games that are restricted - according to the restrictedGames
          algorithm.scheduleForcedGames(restrictedGames, algorithm.curSchedule);
 
-         algorithm.openLogging();
- 
          // Schedule the remaining unrestricted games
          // This is at most derived algorithm level
          algorithm.scheduleUnrestrictedGames(algorithm.curSchedule);
@@ -435,9 +435,6 @@ public class NflScheduler {
             if (game.findAttribute("division")) {
                game.isDivisional = true;
             }
-            if (game.findAttribute("international")) {
-               game.isInternational = true;
-            }
 
             games.add(game);
          }
@@ -667,9 +664,6 @@ public class NflScheduler {
          return false;
       }
 
-      // System.out.println("Placing game for home team: " + usGame.game.homeTeam + ",
-      // and away Team: " + usGame.game.awayTeam + ", in week: " + weekNum);
-
       // Validate that nothing is scheduled in that week for either team
 
       if (homeTeam.scheduledGames[weekNum - 1] != null) {
@@ -713,10 +707,12 @@ public class NflScheduler {
       if (!usGame.isBye) {
          if (homeTeam.team.stadium != null) {
             String stadiumName = homeTeam.team.stadium;
-
             NflResourceSchedule resourceSchedule = schedule.findResource(stadiumName);
             if (resourceSchedule != null && resourceSchedule.hasCapacity(weekNum)) {
                resourceSchedule.usage[weekNum - 1] += 1;
+               if (resourceSchedule.resource.zone.equalsIgnoreCase("international")) {
+                  usGame.isInternational = true;
+               }
             }
          }
       } else {
